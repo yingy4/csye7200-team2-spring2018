@@ -1,0 +1,9 @@
+*/
+!project/
+!project/**
+!src
+!src/**
+!build.sbt
+!README.md
+!Genre Predictor from Lyrics.pptx
+!.gitignore
