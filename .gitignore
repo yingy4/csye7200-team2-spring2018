@@ -1,6 +1,4 @@
 */
-!project/
-!project/**
 !src
 !src/**
 !build.sbt
