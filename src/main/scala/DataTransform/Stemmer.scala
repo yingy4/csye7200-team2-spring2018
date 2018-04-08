@@ -1,5 +1,6 @@
 package DataTransform
 
-class Stemmer {
+object Stemmer {
 
+  val st = new Stemmer()
 }
