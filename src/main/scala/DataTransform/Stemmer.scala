@@ -2,5 +2,5 @@ package DataTransform
 
 object Stemmer {
 
-  val st = new Stemmer()
+  //val st = new Stemmer()
 }
