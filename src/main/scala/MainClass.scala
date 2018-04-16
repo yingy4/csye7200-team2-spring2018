@@ -2,11 +2,11 @@
 
 
 import DataTransform._
-import FeatureExtraction.{ArtistsFrequency, GenreFrequency}
+import FeatureExtraction.{ArtistsFrequency, GenreFrequency, ReadabilityScore, RhymeScheme, Utility}
 import MachineLearning.Word2Vectorizer
-import Pipeline.W2VPipeline
-import org.apache.spark.sql.{Encoders, SparkSession}
-import org.apache.spark.ml.tuning.CrossValidatorModel
+import org.apache.spark.sql.SparkSession
+
+import scala.util.Try
 
 object MainClass {
 
@@ -125,6 +125,22 @@ object MainClass {
 
 
   */
+
+    // convert df to RDD(Tuple6)
+    val rootRDD = df.rdd.map( row =>
+      ( Try(row.getString(0).toInt),
+        Try(row.getString(1)),
+        Try(row.getString(2).toInt),
+        Try(row.getString(3)),
+        Try(row.getString(4)),
+        Try(row.getString(5)) ))
+
+    // transform with Readability Score feature
+    val transformRDD1 = (rootRDD zip ReadabilityScore.transformWithScore(rootRDD)) map (Utility.flattenNestedTuple6)
+
+    // transform with Rhyme Scheme feature
+    val transformRDD2 = (transformRDD1 zip RhymeScheme.transformWithRhymeScheme(rootRDD)) map (Utility.flattenNestedTuple7)
+
   }
 
 }

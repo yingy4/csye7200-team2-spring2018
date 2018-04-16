@@ -51,4 +51,16 @@ object Utility {
 
   }
 
+  // flatten nested tuples 6
+  type inType6 = Tuple2[Tuple6[Try[Int], Try[String], Try[Int], Try[String], Try[String], Try[String]], Try[Double]]
+  type outType6 = Tuple7[Try[Int], Try[String], Try[Int], Try[String], Try[String], Try[String], Try[Double]]
+
+  def flattenNestedTuple6(t : inType6) : outType6 = (t._1._1, t._1._2, t._1._3, t._1._4, t._1._5, t._1._6, t._2)
+
+  // flatted nested tuples 7
+  type inType7 = Tuple2[Tuple7[Try[Int], Try[String], Try[Int], Try[String], Try[String], Try[String], Try[Double]], Try[String]]
+  type outType7 = Tuple8[Try[Int], Try[String], Try[Int], Try[String], Try[String], Try[String], Try[Double], Try[String]]
+
+  def flattenNestedTuple7(t : inType7) : outType7 = (t._1._1, t._1._2, t._1._3, t._1._4, t._1._5, t._1._6, t._1._7, t._2)
+
 }

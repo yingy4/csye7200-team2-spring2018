@@ -9,7 +9,7 @@ import scala.util.Try
 object ReadabilityScore {
 
   type inType = RDD[Tuple6[Try[Int], Try[String], Try[Int], Try[String], Try[String], Try[String]]]
-  type outType = RDD[Tuple7[Try[Int], Try[String], Try[Int], Try[String], Try[String], Try[String], Try[Double]]]
+  type outType = RDD[Try[Double]]
 
   def transformWithScore(inRDD : inType) : outType = {
 
@@ -34,7 +34,7 @@ object ReadabilityScore {
         readingScore
 
       }
-      (rt._1, rt._2, rt._3, rt._4, rt._5, rt._6, srt)
+      (srt.flatten)
       })
     }
 

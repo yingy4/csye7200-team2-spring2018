@@ -12,7 +12,7 @@ import com.mashape.unirest.http.Unirest
 object RhymeScheme {
 
   type inType = RDD[Tuple6[Try[Int], Try[String], Try[Int], Try[String], Try[String], Try[String]]]
-  type outType = RDD[Tuple7[Try[Int], Try[String], Try[Int], Try[String], Try[String], Try[String], Try[String]]]
+  type outType = RDD[Try[String]]
 
   def transformWithRhymeScheme(inRDD : inType) : outType = {
 
@@ -89,7 +89,7 @@ object RhymeScheme {
 
       }
 
-      ( rt._1, rt._2, rt._3, rt._4, rt._5, rt._6, st )
+      ( st )
 
     })
 
