@@ -4,11 +4,13 @@
 import DataTransform._
 import FeatureExtraction.{ArtistsFrequency, GenreFrequency, ReadabilityScore, RhymeScheme, Utility}
 import MachineLearning.Word2Vectorizer
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import scala.util.Try
 
 object MainClass {
+  val lyricsModelDirectoryPath = "/tmp/spark-logistic-regression-model"
+
 
   def main(args: Array[String]): Unit = {
 
@@ -22,14 +24,21 @@ object MainClass {
     val unknownlyrics = "This is me for forever\nOne of the lost ones\nThe one without a name\nWithout an honest heart as compass\n\nThis is me for forever\nOne without a name\nThese lines the last endeavor\nTo find the missing lifeline\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\n\nMy flower, withered between\nThe pages two and three\nThe once and forever bloom gone with my sins\nWalk the dark path\nSleep with angels\nCall the past for help\nTouch me with your love\nAnd reveal to me my true name\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nNemo sailing home\nNemo letting go\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nName for evermore"
 
 
+  //  train(spark)
+    predict(spark, unknownlyrics)
 
+
+  }
+
+
+  def train(spark: SparkSession) ={
     val df = spark.read
       .format("csv")
       .option("header", "true") //reading the headers
       .option("mode", "DROPMALFORMED")
       .option("multiLine", true)
       .load("E:\\C drive\\NEU\\Scala\\Final\\datasets\\kaggle\\original.csv")// Give correct path here.
-      //Rohan's path :E:\C drive\NEU\Scala\Final\datasets\kaggle\
+    //Rohan's path :E:\C drive\NEU\Scala\Final\datasets\kaggle\
 
 
     val cleanedData = DataCleaner.clean(df)
@@ -37,32 +46,24 @@ object MainClass {
     val nonStpWordData = SWRemover.removeStopWords(wordTokenizer.where(wordTokenizer("lyrics").isNotNull))
     val swRemovedWordTokenizer = WordTokenizer.tokenize(nonStpWordData, "words")
 
- //   val artistsFrequency =ArtistsFrequency.filterByArtistFrequency(swRemovedWordTokenizer)
-  //  val genresFrequency =GenreFrequency.filterByGenreFrequency(swRemovedWordTokenizer)
+    //   val artistsFrequency =ArtistsFrequency.filterByArtistFrequency(swRemovedWordTokenizer)
+    //  val genresFrequency =GenreFrequency.filterByGenreFrequency(swRemovedWordTokenizer)
 
     val artistsGroup = ArtistsFrequency.groupLyrics(swRemovedWordTokenizer)
     val genresGroup = GenreFrequency.groupLyrics(swRemovedWordTokenizer)
 
     //val word2VecModelEntire = Word2Vectorizer.vectorize(swRemovedWordTokenizer)
 
-
     val word2VecModelGenres = Word2Vectorizer.vectorizeGenres(genresGroup)
     val word2VecModelArtists = Word2Vectorizer.vectorizeArtists(artistsGroup)
 
+    Word2Vectorizer.saveArtists(word2VecModelArtists)
+    Word2Vectorizer.saveGenres(word2VecModelGenres)
 
-    val split = unknownlyrics.split("\\r?\\n{2,}")(0)
-    word2VecModelGenres.findSynonyms(split, 1).show(false)
-
-
-
-
-    word2VecModelArtists.findSynonyms(split, 1).show(false)
+    println("saved")
 
 
-
-
-
-   // val w2vp = new W2VPipeline(spark).train()
+    // val w2vp = new W2VPipeline(spark).train()
 
 
 
@@ -125,8 +126,11 @@ object MainClass {
 
 
   */
+  }
 
-    // convert df to RDD(Tuple6)
+
+
+  def dfToRDD(df: DataFrame): Unit = {
     val rootRDD = df.rdd.map( row =>
       ( Try(row.getString(0).toInt),
         Try(row.getString(1)),
@@ -140,8 +144,21 @@ object MainClass {
 
     // transform with Rhyme Scheme feature
     val transformRDD2 = (transformRDD1 zip RhymeScheme.transformWithRhymeScheme(rootRDD)) map (Utility.flattenNestedTuple7)
-
   }
+
+
+
+
+  def predict(spark: SparkSession, unknownlyrics: String) = {
+    val split = unknownlyrics.split("\\r?\\n{1,}")(0)
+
+
+    val word2VecModelGenres = Word2Vectorizer.loadGenres()
+    val word2VecModelArtists = Word2Vectorizer.loadArtists()
+    word2VecModelGenres.findSynonyms(split, 1).show(false)
+    word2VecModelArtists.findSynonyms(split, 1).show(false)
+  }
+
 
 }
 

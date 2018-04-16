@@ -17,9 +17,9 @@ object ReadabilityScore {
 
       val srt = for ( t <- rt._6) yield {
         val lyricsFormatted = t.replaceAll("[\"]","")
-                                .replaceAll("[\\n]",". ")
-                                .trim
-                                .replaceAll("[ ]","+")
+          .replaceAll("[\\n]",". ")
+          .trim
+          .replaceAll("[ ]","+")
 
         val readingScore = Try(Unirest.post(s"https://ipeirotis-readability-metrics.p.mashape.com/getReadabilityMetrics?text=$lyricsFormatted")
           .header("X-Mashape-Key", "2DakK9sBl0mshVU2bhO8CGRwQfHAp1G2xevjsnNaIX23Gjdiqc")
@@ -35,8 +35,9 @@ object ReadabilityScore {
 
       }
       (srt.flatten)
-      })
-    }
+    })
+    outRDD
+  }
 
 
 }

@@ -83,7 +83,6 @@ class W2VPipeline(spark: SparkSession) extends  MainPipeline {
 
   def findSynonyms(lyrics: String): DataFrame = {
     val pipelineModel = PipelineModel.read.load(getPipelineModelDirectory())
-
     val word2VecModel = Word2VecModel.load(getPipelineModelDirectory())
     val synonyms = word2VecModel.findSynonyms(lyrics, 5)
     return  synonyms
