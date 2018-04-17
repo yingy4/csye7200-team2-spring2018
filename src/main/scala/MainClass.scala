@@ -76,16 +76,10 @@ object MainClass {
     val wordTokenizer = WordTokenizer.tokenize(cleanedData, "tokenized_words")
     val nonStpWordData = SWRemover.removeStopWords(wordTokenizer.where(wordTokenizer("clean_lyrics").isNotNull))
     val swRemovedWordTokenizer = WordTokenizer.tokenize(nonStpWordData, "words")
+    val songTopWords = SongTokenizer.tokenizeSongs(swRemovedWordTokenizer)
 
-
-
-
-
-
-    val artistsFrequency =ArtistsFrequency.filterByArtistFrequency(swRemovedWordTokenizer)
-
-
-    val genresFrequency =GenreFrequency.filterByGenreFrequency(swRemovedWordTokenizer)
+    val artistsFrequency =ArtistsFrequency.filterByArtistFrequency(songTopWords)
+    val genresFrequency =GenreFrequency.filterByGenreFrequency(songTopWords)
 
     artistsFrequency.show(false)
     genresFrequency.show(false)
