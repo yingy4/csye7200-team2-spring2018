@@ -57,12 +57,21 @@ object MainClass {
 
     // Converting Readability Score and Rhyme Scheme to feature vectors
 
+
+
+  }
+
+
+  def train(spark: SparkSession) ={
     val df = spark.read
       .format("csv")
       .option("header", "true") //reading the headers
       .option("mode", "DROPMALFORMED")
       .option("multiLine", true)
-      .load("C:\\Users\\kunal\\Documents\\Scala\\Scala project\\csye7200-team2-spring2018\\src\\main\\resources\\subset.csv")// Give correct path here.
+      .load("E:\\C drive\\NEU\\Scala\\Final\\datasets\\kaggle\\subset.csv")// Give correct path here.
+    //Rohan's path :E:\C drive\NEU\Scala\Final\datasets\kaggle\
+    //C:\Users\kunal\Documents\Scala\Scala project\csye7200-team2-spring2018\src\main\resources\subset.csv
+
 
     val transformedRDD = dfToRDD(df, spark)
 
@@ -84,19 +93,7 @@ object MainClass {
 
     println("End of Program")
 
-  }
-
-
-  def train(spark: SparkSession) ={
-    val df = spark.read
-      .format("csv")
-      .option("header", "true") //reading the headers
-      .option("mode", "DROPMALFORMED")
-      .option("multiLine", true)
-      .load("E:\\C drive\\NEU\\Scala\\Final\\datasets\\kaggle\\subset.csv")// Give correct path here.
-    //Rohan's path :E:\C drive\NEU\Scala\Final\datasets\kaggle\
-
-
+    
     val cleanedData = DataCleaner.cleanTrain(df)
     val wordTokenizer = WordTokenizer.tokenize(cleanedData, "tokenized_words")
     val nonStpWordData = SWRemover.removeStopWords(wordTokenizer.where(wordTokenizer("clean_lyrics").isNotNull))
@@ -341,10 +338,13 @@ object MainClass {
     val hashingTF = new HashingTF()
       .setInputCol(tokenizer.getOutputCol)
       .setOutputCol("features")
+
+
+    val assembledFeatures =
     val lr = new LogisticRegression()
       .setMaxIter(1).setLabelCol("genre_code")
     val pipeline = new Pipeline()
-      .setStages(Array(tokenizer, hashingTF, lr))
+      .setStages(Array(tokenizer, , lr))
 
     // We use a ParamGridBuilder to construct a grid of parameters to search over.
     // With 3 values for hashingTF.numFeatures and 2 values for lr.regParam,
