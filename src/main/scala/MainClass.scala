@@ -11,7 +11,7 @@ import org.apache.spark.ml.feature.{FeatureHasher, HashingTF, StringIndexer, Tok
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.tuning.{CrossValidator, CrossValidatorModel, ParamGridBuilder}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 import scala.util.Try
@@ -76,7 +76,13 @@ object MainClass {
     val transformedRDD = dfToRDD(df, spark)
 
     val schema = StructType(
-      StructField("rs1", DoubleType, false) ::
+      StructField("index", IntegerType, false) ::
+        StructField("song", StringType, false) ::
+        StructField("year", IntegerType, false) ::
+        StructField("artist", StringType, false) ::
+        StructField("genre", StringType, false) ::
+        StructField("lyrics", StringType, false) ::
+        StructField("rs1", DoubleType, false) ::
         StructField("rs2", StringType, false) :: Nil
     )
 
@@ -211,7 +217,15 @@ object MainClass {
     // transform with Rhyme Scheme feature
     val transformRDD2 = (transformRDD1 zip RhymeScheme.transformWithRhymeScheme(rootRDD)) map (Utility.flattenNestedTuple7)
 
-    val transformRDD3 = for (t <- transformRDD2 if(t._7.isSuccess && t._8.isSuccess)) yield Row(t._7.get, t._8.get)
+    val transformRDD3 = for {t <- transformRDD2 if(t._1.isSuccess &&
+                                                   t._2.isSuccess &&
+                                                   t._3.isSuccess &&
+                                                   t._4.isSuccess &&
+                                                   t._5.isSuccess &&
+                                                   t._6.isSuccess &&
+                                                   t._7.isSuccess &&
+                                                   t._8.isSuccess)}
+    yield Row(t._1.get, t._2.get, t._3.get, t._4.get, t._5.get, t._6.get, t._7.get, t._8.get)
 
     transformRDD3
 
