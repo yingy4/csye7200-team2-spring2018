@@ -57,6 +57,7 @@ object MainClass {
 
     // Converting Readability Score and Rhyme Scheme to feature vectors
 
+    train(spark)
 
 
   }
@@ -68,7 +69,7 @@ object MainClass {
       .option("header", "true") //reading the headers
       .option("mode", "DROPMALFORMED")
       .option("multiLine", true)
-      .load("E:\\C drive\\NEU\\Scala\\Final\\datasets\\kaggle\\subset.csv")// Give correct path here.
+      .load("C:\\Users\\kunal\\Documents\\Scala\\Scala project\\csye7200-team2-spring2018\\src\\main\\resources\\lyricsSmallSet.csv")// Give correct path here.
     //Rohan's path :E:\C drive\NEU\Scala\Final\datasets\kaggle\
     //C:\Users\kunal\Documents\Scala\Scala project\csye7200-team2-spring2018\src\main\resources\subset.csv
 
@@ -83,7 +84,8 @@ object MainClass {
         StructField("genre", StringType, false) ::
         StructField("lyrics", StringType, false) ::
         StructField("rs1", DoubleType, false) ::
-        StructField("rs2", StringType, false) :: Nil
+        StructField("rs2", StringType, false) ::
+        StructField("lyricsWithGenre", StringType, false) :: Nil
     )
 
     val transformedDF = spark.createDataFrame(transformedRDD, schema)
@@ -225,7 +227,9 @@ object MainClass {
                                                    t._6.isSuccess &&
                                                    t._7.isSuccess &&
                                                    t._8.isSuccess)}
-    yield Row(t._1.get, t._2.get, t._3.get, t._4.get, t._5.get, t._6.get, t._7.get, t._8.get)
+    yield {
+      val genre = t._5.get
+      Row(t._1.get, t._2.get, t._3.get, t._4.get, t._5.get, t._6.get, t._7.get, t._8.get, t._6.get.replaceAll("[\\n]",s" $genre \n")) }
 
     transformRDD3
 
@@ -354,11 +358,10 @@ object MainClass {
       .setOutputCol("features")
 
 
-    val assembledFeatures =
     val lr = new LogisticRegression()
       .setMaxIter(1).setLabelCol("genre_code")
     val pipeline = new Pipeline()
-      .setStages(Array(tokenizer, , lr))
+      .setStages(Array(tokenizer, hashingTF, lr))
 
     // We use a ParamGridBuilder to construct a grid of parameters to search over.
     // With 3 values for hashingTF.numFeatures and 2 values for lr.regParam,
