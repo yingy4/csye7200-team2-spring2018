@@ -1,22 +1,18 @@
 
 
 
-import java.lang.IllegalStateException
-
 import DataTransform._
-import FeatureExtraction.{ArtistsFrequency, GenreFrequency, ReadabilityScore, RhymeScheme, Utility}
+import FeatureExtraction._
 import MachineLearning.Word2Vectorizer
-import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.classification.LogisticRegression
-import org.apache.spark.ml.classification.LinearSVC
-import org.apache.spark.ml.evaluation.{BinaryClassificationEvaluator, MulticlassClassificationEvaluator, RegressionEvaluator}
-import org.apache.spark.ml.feature.{HashingTF, Tokenizer}
+import org.apache.spark.ml.evaluation.RegressionEvaluator
+import org.apache.spark.ml.feature.{FeatureHasher, HashingTF, StringIndexer, Tokenizer}
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.tuning.{CrossValidator, CrossValidatorModel, ParamGridBuilder}
-import org.apache.spark.sql.Row
-import org.apache.spark.ml.feature.StringIndexer
-import org.apache.spark.ml.regression.LinearRegression
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 import scala.util.Try
 
@@ -47,7 +43,7 @@ object MainClass {
       .master("local")
       .getOrCreate()
 
-
+/*
     val unknownlyrics = "This is me for forever\nOne of the lost ones\nThe one without a name\nWithout an honest heart as compass\n\nThis is me for forever\nOne without a name\nThese lines the last endeavor\nTo find the missing lifeline\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\n\nMy flower, withered between\nThe pages two and three\nThe once and forever bloom gone with my sins\nWalk the dark path\nSleep with angels\nCall the past for help\nTouch me with your love\nAnd reveal to me my true name\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nNemo sailing home\nNemo letting go\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nName for evermore"
 
 
@@ -57,7 +53,36 @@ object MainClass {
     testtrain(spark)
     testpredict(spark, unknownlyrics)
     //predict(spark, unknownlyrics)
+*/
 
+    // Converting Readability Score and Rhyme Scheme to feature vectors
+
+    val df = spark.read
+      .format("csv")
+      .option("header", "true") //reading the headers
+      .option("mode", "DROPMALFORMED")
+      .option("multiLine", true)
+      .load("C:\\Users\\kunal\\Documents\\Scala\\Scala project\\csye7200-team2-spring2018\\src\\main\\resources\\subset.csv")// Give correct path here.
+
+    val transformedRDD = dfToRDD(df, spark)
+
+    val schema = StructType(
+      StructField("rs1", DoubleType, false) ::
+        StructField("rs2", StringType, false) :: Nil
+    )
+
+    val transformedDF = spark.createDataFrame(transformedRDD, schema)
+
+    val hasher = new FeatureHasher()
+      .setInputCols("rs1", "rs2")
+      .setOutputCol("FHfeatures")
+      .setCategoricalCols(Array("rs2"))
+
+    val FHVectorizedDF = hasher.transform(transformedDF)
+
+    FHVectorizedDF.show(false)
+
+    println("End of Program")
 
   }
 
@@ -174,7 +199,7 @@ object MainClass {
 
 
 
-  def dfToRDD(df: DataFrame): Unit = {
+  def dfToRDD(df: DataFrame, spark: SparkSession): RDD[Row] = {
     val rootRDD = df.rdd.map( row =>
       ( Try(row.getString(0).toInt),
         Try(row.getString(1)),
@@ -188,6 +213,11 @@ object MainClass {
 
     // transform with Rhyme Scheme feature
     val transformRDD2 = (transformRDD1 zip RhymeScheme.transformWithRhymeScheme(rootRDD)) map (Utility.flattenNestedTuple7)
+
+    val transformRDD3 = for (t <- transformRDD2 if(t._7.isSuccess && t._8.isSuccess)) yield Row(t._7.get, t._8.get)
+
+    transformRDD3
+
   }
 
 
