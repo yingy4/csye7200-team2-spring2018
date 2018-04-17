@@ -4,11 +4,17 @@ import org.apache.spark.sql.{DataFrame, Dataset, Row}
 import org.apache.spark.sql.functions._
 import org.spark_project.dmg.pmml.False
 
+import scala.collection.immutable.ListMap
+
 
 object ArtistsFrequency {
-  val flattenTokensAndCount = udf((xs: Seq[Seq[String]]) => xs.flatten.foldLeft(Map[String,Int]() withDefaultValue 0){
-    (word,occurence) => word + (occurence -> (1 + word(occurence)))
-    })
+  val flattenTokensAndCount = udf((xs: Seq[Seq[String]]) => {
+    val map = xs.flatten.foldLeft(Map[String, Int]() withDefaultValue 0) {
+      (word, occurence) => word + (occurence -> (1 + word(occurence)))
+    }
+
+    ListMap(map.toSeq.sortWith(_._2 > _._2): _*) take(5)
+  })
 
   val flattenTokens = udf((xs: Seq[Seq[String]]) => xs.flatten.distinct)
 
