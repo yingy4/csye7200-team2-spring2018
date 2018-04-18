@@ -3,14 +3,10 @@
 
 import DataTransform._
 import FeatureExtraction._
-import MachineLearning.{MLVectorAssembler, Word2Vectorizer}
-import org.apache.spark.ml.Pipeline
-import org.apache.spark.ml.classification.{LogisticRegression, RandomForestClassifier}
-import org.apache.spark.ml.evaluation.RegressionEvaluator
-import org.apache.spark.ml.feature._
+import MachineLearning.Word2Vectorizer
+import org.apache.spark.SparkConf
 import org.apache.spark.ml.linalg.Vector
-import org.apache.spark.ml.tuning.{CrossValidator, CrossValidatorModel, ParamGridBuilder}
-import org.apache.spark.rdd.RDD
+import org.apache.spark.ml.tuning.CrossValidatorModel
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
@@ -37,46 +33,74 @@ object MainClass {
 
   def main(args: Array[String]): Unit = {
 
-    val spark = SparkSession
-      .builder()
-      .appName("GenrePredictorFromLyrics")
-      .master("local")
-      .getOrCreate()
+    if(!args.isEmpty && args.head.equals("local")) {
+      // application running locally
+      val spark = SparkSession
+        .builder()
+        .appName("GenrePredictorFromLyrics")
+        .master("local")
+        .getOrCreate()
 
 
-/*
-    val unknownlyrics = "This is me for forever\nOne of the lost ones\nThe one without a name\nWithout an honest heart as compass\n\nThis is me for forever\nOne without a name\nThese lines the last endeavor\nTo find the missing lifeline\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\n\nMy flower, withered between\nThe pages two and three\nThe once and forever bloom gone with my sins\nWalk the dark path\nSleep with angels\nCall the past for help\nTouch me with your love\nAnd reveal to me my true name\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nNemo sailing home\nNemo letting go\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nName for evermore"
+      /*
+          val unknownlyrics = "This is me for forever\nOne of the lost ones\nThe one without a name\nWithout an honest heart as compass\n\nThis is me for forever\nOne without a name\nThese lines the last endeavor\nTo find the missing lifeline\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\n\nMy flower, withered between\nThe pages two and three\nThe once and forever bloom gone with my sins\nWalk the dark path\nSleep with angels\nCall the past for help\nTouch me with your love\nAnd reveal to me my true name\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nNemo sailing home\nNemo letting go\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nName for evermore"
 
 
-   // train(spark)
-   // predict(spark, unknownlyrics)
+         // train(spark)
+         // predict(spark, unknownlyrics)
 
-    testtrain(spark)
-    testpredict(spark, unknownlyrics)
-    //predict(spark, unknownlyrics)
-*/
+          testtrain(spark)
+          testpredict(spark, unknownlyrics)
+          //predict(spark, unknownlyrics)
+      */
 
-    // Converting Readability Score and Rhyme Scheme to feature vectors
+      // Converting Readability Score and Rhyme Scheme to feature vectors
 
-   // train(spark)
-  //  println("----------------------------------------Training Completed.--------------------------------------------------------------------")
-  //  testpredict(spark, unknownlyrics)
+      // train(spark)
+      //  println("----------------------------------------Training Completed.--------------------------------------------------------------------")
+      //  testpredict(spark, unknownlyrics)
 
-    val unknownlyrics = "This is me for forever\nOne of the lost ones\nThe one without a name\nWithout an honest heart as compass\n\nThis is me for forever\nOne without a name\nThese lines the last endeavor\nTo find the missing lifeline\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\n\nMy flower, withered between\nThe pages two and three\nThe once and forever bloom gone with my sins\nWalk the dark path\nSleep with angels\nCall the past for help\nTouch me with your love\nAnd reveal to me my true name\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nNemo sailing home\nNemo letting go\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nName for evermore"
+      val unknownlyrics = "This is me for forever\nOne of the lost ones\nThe one without a name\nWithout an honest heart as compass\n\nThis is me for forever\nOne without a name\nThese lines the last endeavor\nTo find the missing lifeline\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\n\nMy flower, withered between\nThe pages two and three\nThe once and forever bloom gone with my sins\nWalk the dark path\nSleep with angels\nCall the past for help\nTouch me with your love\nAnd reveal to me my true name\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nNemo sailing home\nNemo letting go\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nName for evermore"
 
-    import scala.util.control.Breaks.{breakable, break}
-    breakable {
-      while (1 == 1) {
-        println("1 -> Train, 2 -> Predict, 3 -> End")
-        val inp = scala.io.StdIn.readInt()
-        println(s"User input is $inp")
-        if (inp == 3) break
+      import scala.util.control.Breaks.{break, breakable}
+      breakable {
+        while (1 == 1) {
+          println("1 -> Train, 2 -> Predict, 3 -> End")
+          val inp = scala.io.StdIn.readInt()
+          println(s"User input is $inp")
+          if (inp == 3) break
 
-        // call train or testpredict method
-        if (inp == 1) train(spark) else testpredict(spark, unknownlyrics)
+          // call train or testpredict method
+          if (inp == 1) train(spark) else testpredict(spark, unknownlyrics)
 
+        }
       }
+
+    } else {
+      // application running on EMR
+      import GitIgnoredMethods._
+      val conf = setSparkConfWithAccessKey(new SparkConf()
+        .set("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem"))
+
+      val spark = SparkSession
+        .builder()
+        .appName("GenrePredictorFromLyrics")
+        .config(conf)
+        .getOrCreate()
+
+      val df = spark.read
+        .option("header", "true")
+        .option("multiLine", true)
+        .option("mode", "DROPMALFORMED")
+        .csv("s3a://sparkprojectbucket/lyrics.csv")
+
+      // call train method
+
+
+      df.show(10, true)
     }
+
+
 
   }
 

@@ -6,6 +6,10 @@ logLevel := Level.Error
 
 scalaVersion := "2.11.11"
 
+// https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-aws
+libraryDependencies += "org.apache.hadoop" % "hadoop-aws" % "2.7.3"
+
+
 // https://mvnrepository.com/artifact/org.apache.spark/spark-mllib
 libraryDependencies += "org.apache.spark" %% "spark-mllib" % "2.3.0"
 
