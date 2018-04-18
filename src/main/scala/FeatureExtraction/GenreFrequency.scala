@@ -15,10 +15,7 @@ object GenreFrequency {
 
 
 
-  val flattenTokens = udf((xs: Seq[Seq[String]]) => {
-    val map = xs.flatten.distinct
-
-  })
+  val flattenTokens = udf((xs: Seq[Seq[String]]) => xs.flatten.distinct)
 
   def filterByGenreFrequency(df:DataFrame): DataFrame = {
     val genreCommonWords = df.groupBy("genre").agg(flattenTokensAndCount(collect_list(df("words"))).as("genre_tokens"))

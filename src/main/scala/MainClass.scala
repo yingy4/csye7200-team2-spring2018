@@ -5,11 +5,13 @@ import DataTransform._
 import FeatureExtraction._
 import MachineLearning.Word2Vectorizer
 import org.apache.spark.SparkConf
-import org.apache.spark.ml.linalg.Vector
+import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.ml.tuning.CrossValidatorModel
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
+import scala.collection.immutable.ListMap
+import scala.collection.mutable
 import scala.util.Try
 
 object MainClass {
@@ -112,7 +114,7 @@ object MainClass {
       .option("header", "true") //reading the headers
       .option("mode", "DROPMALFORMED")
       .option("multiLine", true)
-      .load("E:\\C drive\\NEU\\Scala\\Final\\datasets\\kaggle\\original.csv")// Give correct path here.
+      .load("E:\\C drive\\NEU\\Scala\\Final\\datasets\\kaggle\\train.csv")// Give correct path here.
     //Rohan's path :E:\C drive\NEU\Scala\Final\datasets\kaggle\
     //C:\Users\kunal\Documents\Scala\Scala project\csye7200-team2-spring2018\src\main\resources\subset.csv
 
@@ -134,6 +136,9 @@ object MainClass {
 
     // W2V Testing Starts
 //    val word2VecModel = Word2Vectorizer.vectorize(clean_lyrics)
+
+
+    clean_lyrics.show(false)
     val genresGroup = GenreFrequency.groupLyrics(clean_lyrics)
     val word2VecModelGenres = Word2Vectorizer.vectorizeGenres(genresGroup)
 
@@ -149,31 +154,37 @@ object MainClass {
 
 
 
-    val cleanedData = DataCleaner.cleanPredict(spark.createDataFrame(Seq(
+  /*  val cleanedData = DataCleaner.cleanPredict(spark.createDataFrame(Seq(
       (0, unknownlyrics2)
-    )).toDF("id", "lyrics"))
+    )).toDF("index", "tokenized_words"))
 
-    cleanedData.show(false)
+    cleanedData.show(false)*/
 
-/*
-    println("--------------------cosinesimilarity-----------------------")
-    for(word <- splitWords) {
-      println("-------------------------------------------------------------------------")
-      println(word)
-      try {
-        val synonyms = word2VecModelGenres.findSynonyms("word", 5)
 
-        for((synonym, cosineSimilarity) <- synonyms) {
-          println(s"$synonym $cosineSimilarity")
-        }
 
-      }catch {
-        case e: IllegalStateException => print("")
+    val list = List("Genre" , "Pop" , "Rock", "Electronic", "Hip-Hop", "Metal", "Jazz", "Folk", "Not Available","R&B",  "Other", "Country", "Indie")
+    val map = list.foldLeft(ListMap[String, Array[Double]]()) {
+      (acc, genre)=> {
+        acc + (genre->word2VecModelGenres.transform(genre).toArray)
       }
-      println("-------------------------------------------------------------------------")
     }
-*/
 
+
+    println("--------------------cosinesimilarity-----------------------")
+    val vta = for(word <- splitWords) yield Try(word2VecModelGenres.transform(word))
+
+    val sa = for (vt <- vta if (vt.isSuccess)) yield findSimilarGenre(vt.get, map)
+
+    val distinct = sa.distinct
+
+    val bestGenre = distinct.foldLeft(("",0)){(acc, genre) => {
+      val c = sa.count(_.equals(genre))
+      if (c > acc._2) (genre,c) else (acc._1,acc._2)
+    }}
+
+    val predictedGenre = bestGenre._1
+
+    println("Predicted Genre " + predictedGenre)
 
     // W2V Testing Ends
 
@@ -432,10 +443,11 @@ object MainClass {
   }
 
 
-
+/*
   def predict(spark: SparkSession, unknownlyrics: String) = {
     val splitSentences = unknownlyrics.split("\\r?\\n{1,}")
     val splitWords = unknownlyrics.split("\\s+")
+
 
     val word2VecModelGenres = Word2Vectorizer.loadGenres()
     val word2VecModelArtists = Word2Vectorizer.loadArtists()
@@ -486,7 +498,7 @@ object MainClass {
     //word2VecModelArtists.findSynonyms(split, 1).show(false)
   }
 
-
+*/
 
   def testpredict(spark:SparkSession, unknownlyrics: String ) = {
 
@@ -520,6 +532,19 @@ object MainClass {
       .foreach { case Row(genre: String, prob: Vector, prediction: Double) =>
         println(s"Actual genre = $genre --> prob=$prob, prediction=$prediction")
       }
+  }
+
+
+  def findSimilarGenre(unknownwordVector: Vector, map : Map[String,Array[Double]]): String = {
+    val closestGenre = map.foldLeft(("",0.0 )) {(acc, kv) => {
+      val similarity = Word2Vectorizer.cosine(unknownwordVector.toArray, kv._2)
+      if(acc._2 > similarity)
+        acc
+      else
+        (kv._1, similarity)
+    }}
+
+    closestGenre._1
   }
 }
 

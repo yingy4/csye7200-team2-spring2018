@@ -8,7 +8,6 @@ import org.apache.spark.sql.functions._
 
 
 object WordTokenizer {
-
   def tokenize(df:DataFrame, columnName:String): DataFrame = {
     val regexTokenizer = new RegexTokenizer()
       .setInputCol("lyrics")

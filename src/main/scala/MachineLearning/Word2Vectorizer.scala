@@ -1,6 +1,9 @@
 package MachineLearning
 
-import org.apache.spark.ml.feature.{Word2Vec, Word2VecModel}
+//import org.apache.spark.ml.feature.{Word2Vec, Word2VecModel}
+
+import org.apache.spark.SparkContext
+import org.apache.spark.mllib.feature.{Word2Vec, Word2VecModel}
 import org.apache.spark.sql.DataFrame
 
 import scala.collection.mutable
@@ -13,44 +16,45 @@ object Word2Vectorizer {
   private val genreVocab = new mutable.HashMap[String, Array[Float]]()
 
 
+  /*
   def vectorize(df:DataFrame): Word2VecModel = {
     val word2Vec = new Word2Vec().setInputCol("words").setOutputCol("features").setVectorSize(4).setMinCount(1)
+
     val out_df = word2Vec.fit(df)
     out_df
   }
+  */
 
   def vectorizeGenres(df:DataFrame): Word2VecModel = {
-    val word2Vec = new Word2Vec().setInputCol("tokenized_words").setOutputCol("features").setVectorSize(4).setMinCount(1)
-    val out_df = word2Vec.fit(df)
-    out_df
+    val word2VecModel = new Word2Vec().setMinCount(2).fit(df.withColumn("tokenized_words", df("tokenized_words")).rdd.map(row => Seq(row.getString(0))))
+    word2VecModel
   }
 
   def vectorizeArtists(df:DataFrame): Word2VecModel = {
-    val word2Vec = new Word2Vec().setInputCol("tokenized_words").setOutputCol("features").setVectorSize(4).setMinCount(1)
-    val out_df = word2Vec.fit(df)
-    out_df
+    val word2VecModel = new Word2Vec().setMinCount(2).fit(df.withColumn("tokenized_words", df("tokenized_words")).rdd.map(row => Seq(row.getString(0))))
+    word2VecModel
   }
 
-  def saveGenres(word2VecModel: Word2VecModel): Unit = {
-    word2VecModel.write.overwrite().save(genresDir)
+  def saveGenres(spark:SparkContext, word2VecModel: Word2VecModel): Unit = {
+    word2VecModel.save(spark, genresDir)
   }
 
-  def saveArtists(word2VecModel: Word2VecModel): Unit = {
-    word2VecModel.write.overwrite().save(artistsDir)
-  }
-
-
-  def loadGenres(): Word2VecModel = {
-    Word2VecModel.load(genresDir)
-  }
-
-  def loadArtists(): Word2VecModel = {
-    Word2VecModel.load(artistsDir)
+  def saveArtists(spark: SparkContext, word2VecModel: Word2VecModel): Unit = {
+    word2VecModel.save(spark, artistsDir)
   }
 
 
+  def loadGenres(spark: SparkContext): Word2VecModel = {
+    Word2VecModel.load(spark, genresDir)
+  }
 
-  def cosine(vec1: Array[Float], vec2: Array[Float]): Double = {
+  def loadArtists(spark: SparkContext): Word2VecModel = {
+    Word2VecModel.load(spark, artistsDir)
+  }
+
+
+
+  def cosine(vec1: Array[Double], vec2: Array[Double]): Double = {
     assert(vec1.length == vec2.length, "Uneven vectors!")
     var dot, sum1, sum2 = 0.0
     for (i <- 0 until vec1.length) {
@@ -62,10 +66,10 @@ object Word2Vectorizer {
   }
 
 
-  def cosineArtists(word1: String, word2: String): Double = {
+  /*def cosineArtists(word1: String, word2: String): Double = {
     assert(containsArtists(word1) && containsArtists(word2), "Out of dictionary word! " + word1 + " or " + word2)
-    cosine(artistsVocab.get(word1).get, artistsVocab.get(word2).get)
-  }
+   // cosine(artistsVocab.get(word1).get, artistsVocab.get(word2).get)
+  }*/
 
   def containsArtists(word: String): Boolean = {
     artistsVocab.get(word).isDefined
