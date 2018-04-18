@@ -13,20 +13,20 @@ object Word2Vectorizer {
   private val genreVocab = new mutable.HashMap[String, Array[Float]]()
 
 
-    def vectorize(df:DataFrame): Word2VecModel = {
-      val word2Vec = new Word2Vec().setInputCol("words").setOutputCol("features").setVectorSize(3).setMinCount(1)
-      val out_df = word2Vec.fit(df)
-      out_df
-    }
+  def vectorize(df:DataFrame): Word2VecModel = {
+    val word2Vec = new Word2Vec().setInputCol("words").setOutputCol("features").setVectorSize(4).setMinCount(1)
+    val out_df = word2Vec.fit(df)
+    out_df
+  }
 
   def vectorizeGenres(df:DataFrame): Word2VecModel = {
-    val word2Vec = new Word2Vec().setInputCol("tokenized_words").setOutputCol("features").setVectorSize(3).setMinCount(1)
+    val word2Vec = new Word2Vec().setInputCol("tokenized_words").setOutputCol("features").setVectorSize(4).setMinCount(1)
     val out_df = word2Vec.fit(df)
     out_df
   }
 
   def vectorizeArtists(df:DataFrame): Word2VecModel = {
-    val word2Vec = new Word2Vec().setInputCol("tokenized_words").setOutputCol("features").setVectorSize(3).setMinCount(1)
+    val word2Vec = new Word2Vec().setInputCol("tokenized_words").setOutputCol("features").setVectorSize(4).setMinCount(1)
     val out_df = word2Vec.fit(df)
     out_df
   }
@@ -60,6 +60,7 @@ object Word2Vectorizer {
     }
     dot / (math.sqrt(sum1) * math.sqrt(sum2))
   }
+
 
   def cosineArtists(word1: String, word2: String): Double = {
     assert(containsArtists(word1) && containsArtists(word2), "Out of dictionary word! " + word1 + " or " + word2)

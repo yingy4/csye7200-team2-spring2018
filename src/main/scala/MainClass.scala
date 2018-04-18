@@ -5,7 +5,7 @@ import DataTransform._
 import FeatureExtraction._
 import MachineLearning.{MLVectorAssembler, Word2Vectorizer}
 import org.apache.spark.ml.Pipeline
-import org.apache.spark.ml.classification.LogisticRegression
+import org.apache.spark.ml.classification.{LogisticRegression, RandomForestClassifier}
 import org.apache.spark.ml.evaluation.RegressionEvaluator
 import org.apache.spark.ml.feature._
 import org.apache.spark.ml.linalg.Vector
@@ -17,8 +17,8 @@ import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import scala.util.Try
 
 object MainClass {
-  val lyricsModelDirectoryPath = "/tmp/spark-logistic-regression-model"
-
+  //val lyricsModelDirectoryPath = "/tmp/spark-logistic-regression-model/final/"
+  val lyricsModelDirectoryPath = "/tmp/spark-logistic-regression-model/final/test/"
   /*
   Id    Genre
   0.0 - Pop
@@ -43,7 +43,7 @@ object MainClass {
       .master("local")
       .getOrCreate()
 
-    val unknownlyrics = "This is me for forever\nOne of the lost ones\nThe one without a name\nWithout an honest heart as compass\n\nThis is me for forever\nOne without a name\nThese lines the last endeavor\nTo find the missing lifeline\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\n\nMy flower, withered between\nThe pages two and three\nThe once and forever bloom gone with my sins\nWalk the dark path\nSleep with angels\nCall the past for help\nTouch me with your love\nAnd reveal to me my true name\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nNemo sailing home\nNemo letting go\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nName for evermore"
+
 /*
     val unknownlyrics = "This is me for forever\nOne of the lost ones\nThe one without a name\nWithout an honest heart as compass\n\nThis is me for forever\nOne without a name\nThese lines the last endeavor\nTo find the missing lifeline\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\n\nMy flower, withered between\nThe pages two and three\nThe once and forever bloom gone with my sins\nWalk the dark path\nSleep with angels\nCall the past for help\nTouch me with your love\nAnd reveal to me my true name\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nNemo sailing home\nNemo letting go\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nName for evermore"
 
@@ -62,6 +62,7 @@ object MainClass {
   //  println("----------------------------------------Training Completed.--------------------------------------------------------------------")
   //  testpredict(spark, unknownlyrics)
 
+    val unknownlyrics = "This is me for forever\nOne of the lost ones\nThe one without a name\nWithout an honest heart as compass\n\nThis is me for forever\nOne without a name\nThese lines the last endeavor\nTo find the missing lifeline\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\n\nMy flower, withered between\nThe pages two and three\nThe once and forever bloom gone with my sins\nWalk the dark path\nSleep with angels\nCall the past for help\nTouch me with your love\nAnd reveal to me my true name\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nNemo sailing home\nNemo letting go\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nName for evermore"
 
     import scala.util.control.Breaks.{breakable, break}
     breakable {
@@ -87,7 +88,7 @@ object MainClass {
       .option("header", "true") //reading the headers
       .option("mode", "DROPMALFORMED")
       .option("multiLine", true)
-      .load("E:\\C drive\\NEU\\Scala\\Final\\datasets\\kaggle\\train.csv")// Give correct path here.
+      .load("E:\\C drive\\NEU\\Scala\\Final\\datasets\\kaggle\\original.csv")// Give correct path here.
     //Rohan's path :E:\C drive\NEU\Scala\Final\datasets\kaggle\
     //C:\Users\kunal\Documents\Scala\Scala project\csye7200-team2-spring2018\src\main\resources\subset.csv
 
@@ -102,8 +103,55 @@ object MainClass {
 
     val clean_lyrics  = extractFeaturesForLyrics(transformedDF)
 
+    println("End Lyrics Feature Extraction.")
 
 
+
+
+    // W2V Testing Starts
+//    val word2VecModel = Word2Vectorizer.vectorize(clean_lyrics)
+    val genresGroup = GenreFrequency.groupLyrics(clean_lyrics)
+    val word2VecModelGenres = Word2Vectorizer.vectorizeGenres(genresGroup)
+
+
+
+    val unknownlyrics2 = "This is me for forever\nOne of the lost ones\nThe one without a name\nWithout an honest heart as compass\n\nThis is me for forever\nOne without a name\nThese lines the last endeavor\nTo find the missing lifeline\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\n\nMy flower, withered between\nThe pages two and three\nThe once and forever bloom gone with my sins\nWalk the dark path\nSleep with angels\nCall the past for help\nTouch me with your love\nAnd reveal to me my true name\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nNemo sailing home\nNemo letting go\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nName for evermore"
+    val splitSentences = unknownlyrics2.split("\\r?\\n{1,}")
+    val splitWords = unknownlyrics2.split("\\s+")
+    def Sentences =
+      for {
+        sentence <- splitSentences
+      } yield (println(sentence))
+
+
+
+    val cleanedData = DataCleaner.cleanPredict(spark.createDataFrame(Seq(
+      (0, unknownlyrics2)
+    )).toDF("id", "lyrics"))
+
+    cleanedData.show(false)
+
+/*
+    println("--------------------cosinesimilarity-----------------------")
+    for(word <- splitWords) {
+      println("-------------------------------------------------------------------------")
+      println(word)
+      try {
+        val synonyms = word2VecModelGenres.findSynonyms("word", 5)
+
+        for((synonym, cosineSimilarity) <- synonyms) {
+          println(s"$synonym $cosineSimilarity")
+        }
+
+      }catch {
+        case e: IllegalStateException => print("")
+      }
+      println("-------------------------------------------------------------------------")
+    }
+*/
+
+
+    // W2V Testing Ends
 
     //testtrain(spark, songTopWords)
 
@@ -213,7 +261,7 @@ object MainClass {
     val unknownlyrics = "This is me for forever\nOne of the lost ones\nThe one without a name\nWithout an honest heart as compass\n\nThis is me for forever\nOne without a name\nThese lines the last endeavor\nTo find the missing lifeline\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\n\nMy flower, withered between\nThe pages two and three\nThe once and forever bloom gone with my sins\nWalk the dark path\nSleep with angels\nCall the past for help\nTouch me with your love\nAnd reveal to me my true name\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nNemo sailing home\nNemo letting go\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nName for evermore"
 
 
-
+  /* Testing Starts
     // Configure an ML pipeline, which consists of three stages: hasher, tokenizer, hashingTF, assembler, and lr.
     val hasher = new FeatureHasher()
       .setInputCols("rs1", "rs2")
@@ -244,7 +292,7 @@ object MainClass {
       .setLabels(indexer.labels)
 
     val pipeline = new Pipeline()
-      .setStages(Array(hasher, tokenizer, hashingTF, assembler, indexer, lr, converter))
+      .setStages(Array(hasher, tokenizer, hashingTF, assembler, indexer, rf, converter))
 
     // We use a ParamGridBuilder to construct a grid of parameters to search over.
     // With 3 values for hashingTF.numFeatures and 2 values for lr.regParam,
@@ -263,11 +311,16 @@ object MainClass {
       .setEstimator(pipeline)
       .setEvaluator(new RegressionEvaluator().setLabelCol("genre_code"))
       .setEstimatorParamMaps(paramGrid)
-      .setNumFolds(2)  // Use 3+ in practice
-      .setParallelism(2)  // Evaluate up to 2 parameter settings in parallel
+      .setNumFolds(3)  // Use 3+ in practice
+      .setParallelism(4)  // Evaluate up to 2 parameter settings in parallel
 
     // Run cross-validation, and choose the best set of parameters.
     val cvModel = cv.fit(clean_lyrics)
+
+    Testing Ends
+    */
+
+
     /*
 
         // Prepare test documents, which are unlabeled (id, text) tuples.
@@ -285,9 +338,11 @@ object MainClass {
     */
 
 
-    val cvModelSaveDir = "/tmp/spark-logistic-regression-model"+"/word2vec/" + "/word2vec/cvmodel/"
+    /* Testing Starts
+   val cvModelSaveDir = lyricsModelDirectoryPath + "/word2vec/cvmodel/"
     cvModel.write.overwrite().save(cvModelSaveDir)
-
+     Testing Ends
+    */
   }
 
 
@@ -428,9 +483,9 @@ object MainClass {
     val rsAndRhymeScheme = extractRSAndRhymeScheme(dataf, spark)
     val lyricsFeatures = extractFeaturesForLyrics(rsAndRhymeScheme)
 
-    val cvModelSaveDir = "/tmp/spark-logistic-regression-model"+"/word2vec/" + "/word2vec/cvmodel/"
+    val cvModelSaveDir = lyricsModelDirectoryPath + "/word2vec/cvmodel/"
 
-    val cvModel = CrossValidatorModel.load("/tmp/spark-logistic-regression-model"+"/word2vec/" + "/word2vec/cvmodel/")
+    val cvModel = CrossValidatorModel.load(cvModelSaveDir)
 
 
     val predictedDF = cvModel.transform(lyricsFeatures)
