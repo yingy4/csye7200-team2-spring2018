@@ -431,9 +431,11 @@ object MainClass {
     transformedDF.show(5,true)
     val cleanedData = DataCleaner.cleanTrain(transformedDF)
     cleanedData.show(5,true)
-    val wordTokenizer = WordTokenizer.tokenize(cleanedData,"clean_lyrics2","tokenized_words")
+    val wordTokenizer = WordTokenizer.tokenize(cleanedData,"clean_lyrics","clean_tokens")
     wordTokenizer.show(5,true)
-    val nonStpWordData = SWRemover.removeStopWords(wordTokenizer.where(wordTokenizer("clean_lyrics").isNotNull))
+    val wordTokenizer2 = WordTokenizer.tokenize(cleanedData,"clean_lyrics2","tokenized_words")
+    wordTokenizer2.show(5,true)
+    val nonStpWordData = SWRemover.removeStopWords(wordTokenizer2.where(wordTokenizer2("clean_lyrics").isNotNull))
     nonStpWordData.show(5,true)
     /*val swRemovedWordTokenizer = WordTokenizer.tokenize(nonStpWordData,"filtered lyrics","words")
     swRemovedWordTokenizer.show(5,true)*/

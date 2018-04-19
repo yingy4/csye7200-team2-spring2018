@@ -26,7 +26,12 @@ object Word2Vectorizer {
   */
 
   def vectorizeGenres(df:DataFrame): Word2VecModel = {
-    val word2VecModel = new Word2Vec().setMinCount(2).fit(df.withColumn("clean_lyrics", df("clean_lyrics")).rdd.map(row => row.getString(0).split("\\s+").toSeq))
+    //val tempdf = df.withColumn("agg_clean_lyrics", df("clean_lyrics"))
+    df.show(2,false)
+    val rdd = df.rdd.map(row => row.getSeq(1))
+    rdd.collect()(0) foreach println
+
+    val word2VecModel = new Word2Vec().setMinCount(1).fit(rdd)
     word2VecModel
   }
 

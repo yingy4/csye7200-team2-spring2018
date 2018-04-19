@@ -23,21 +23,7 @@ object GenreFrequency {
   }
 
   def groupLyrics(df:DataFrame): DataFrame = {
-    val genreCommonLyrics = df.groupBy("genre").agg(flattenTokens(collect_list(df("words"))).as("tokenized_words"))
+    val genreCommonLyrics = df.groupBy("genre").agg(flattenTokens(collect_list(df("filtered lyrics"))).as("agg_clean_lyrics"))
     return genreCommonLyrics
-  }
-
-
-  def addGenre(df:DataFrame): Unit = {
-    val genreCommonWords = df.rdd
-    for (elem <- genreCommonWords.collect()) {
-      println(elem)
-      println("-----")
-    }
-    //return genreCommonWords
-  }
-
-  def insert[T](list: List[T], i: Int, value: T) = {
-    list.take(i) ++ List(value) ++ list.drop(i)
   }
 }
