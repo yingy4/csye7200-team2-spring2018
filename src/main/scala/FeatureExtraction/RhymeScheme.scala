@@ -5,8 +5,6 @@ import Utility._
 import scala.util.Try
 import Stream._
 import scala.collection.immutable.ListMap
-import com.mashape.unirest.http.HttpResponse
-import com.mashape.unirest.http.JsonNode
 import com.mashape.unirest.http.Unirest
 
 object RhymeScheme {

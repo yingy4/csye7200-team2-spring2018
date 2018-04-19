@@ -102,7 +102,7 @@ object MainClass {
         .option("multiLine", true)
         .load("E:\\C drive\\NEU\\Scala\\Final\\datasets\\kaggle\\train.csv")// Give correct path here.
       //Rohan's path :E:\C drive\NEU\Scala\Final\datasets\kaggle\
-      //C:\Users\kunal\Documents\Scala\Scala project\csye7200-team2-spring2018\src\main\resources\subset.csv
+
       return dataf
     } else if (str.equals("TrainEMR")){
 
@@ -146,10 +146,10 @@ object MainClass {
 
 
     // calling Word2Vec Pipeline
-    trainWord2VecModel(clean_lyrics)
+    //trainWord2VecModel(clean_lyrics)
 
     // calling CrossValidatorModel Pipeline
-    //trainCrossValidatorModel(clean_lyrics)
+    trainCrossValidatorModel(clean_lyrics)
 
 
 
