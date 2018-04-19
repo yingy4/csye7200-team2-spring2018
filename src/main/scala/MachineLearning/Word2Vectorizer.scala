@@ -4,7 +4,7 @@ package MachineLearning
 
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.feature.{Word2Vec, Word2VecModel}
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, Row}
 
 import scala.collection.mutable
 
@@ -28,20 +28,14 @@ object Word2Vectorizer {
   def vectorizeGenres(df:DataFrame): Word2VecModel = {
     //val tempdf = df.withColumn("agg_clean_lyrics", df("clean_lyrics"))
     df.show(false)
-    val rdd = df.rdd.map(row => {
-      val genre = row.getString(0)
 
-      val returnSeq = row.getSeq(1).foldLeft((1, Seq("")))((acc, word) => {
-        if(acc._1 % 10 == 0)
-          (acc._1 + 1, acc._2 :+ genre :+ word)
-        else
-          (acc._1 + 1, acc._2 :+ word)
-      })
-      returnSeq._2
-    })
+    val rdd = df.rdd.map{
+      case Row(genre:String, agg:mutable.WrappedArray[String]) => agg.mkString(" ").concat(" ").concat(genre).trim.split(" ").toSeq
+    }
 
 
     rdd.collect()(0) foreach println
+
 
 
 

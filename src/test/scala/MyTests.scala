@@ -1,3 +1,4 @@
+/*
 import org.scalatest.FlatSpec
 import FeatureExtraction.Utility._
 import DataTransform._
@@ -49,3 +50,4 @@ class MyTests extends FlatSpec{
     }
   }
 }
+*/

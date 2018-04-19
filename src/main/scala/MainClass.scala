@@ -4,7 +4,8 @@
 import DataTransform._
 import FeatureExtraction._
 import MachineLearning.Word2Vectorizer
-import org.apache.spark.SparkConf
+import org.apache.spark.mllib.feature.{Word2Vec, Word2VecModel}
+import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.classification.LogisticRegression
 import org.apache.spark.ml.evaluation.RegressionEvaluator
@@ -146,10 +147,13 @@ object MainClass {
 
 
     // calling Word2Vec Pipeline
-    //trainWord2VecModel(clean_lyrics)
+    trainWord2VecModel(clean_lyrics, spark.sparkContext)
 
     // calling CrossValidatorModel Pipeline
-    trainCrossValidatorModel(clean_lyrics)
+   // trainCrossValidatorModel(clean_lyrics)
+
+
+
 
 
     //val artistsFrequency =ArtistsFrequency.filterByArtistFrequency(clean_lyrics)
@@ -278,7 +282,7 @@ object MainClass {
 
   }
 
-  def trainWord2VecModel(clean_lyrics : DataFrame) = {
+  def trainWord2VecModel(clean_lyrics : DataFrame, spark:SparkContext) = {
 
     // Word2Vec pipeline start
     clean_lyrics.show(true)
@@ -287,40 +291,9 @@ object MainClass {
     // train word2vec and return model
     val word2VecModelGenres = Word2Vectorizer.vectorizeGenres(genresGroup)
 
+    val word2VecModelSaveDir = lyricsModelDirectoryPath + "/word2vec/word2vec/finalpresentation/"
 
-    // sample test word2vec model start
-    val unknownlyrics2 = "This is me for forever One of the lost ones The one without a name Without an honest heart as compass This is me for forever One without a name These lines the last endeavor To find the missing lifeline Oh how I wish For soothing rain All I wish is to dream again My loving heart Lost in the dark For hope I'd give my everything My flower, withered between The pages two and three The once and forever bloom gone with my sins\nWalk the dark path\nSleep with angels\nCall the past for help\nTouch me with your love\nAnd reveal to me my true name\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nNemo sailing home\nNemo letting go\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nName for evermore"
-    val splitSentences = unknownlyrics2.split("\\r?\\n{1,}")
-    val splitWords = unknownlyrics2.replaceAll("\\n"," ").trim.split("\\s+")
-
-    for {
-      sentence <- splitWords
-    } (println(sentence))
-
-    // creating map of genres and their respective vectors
-    val list = List("pop" , "rock", "electronic", "hip", "metal", "jazz", "folk", "available", "r&b",  "other", "country", "indie")
-    val map = list.foldLeft(ListMap[String, Array[Double]]()) {
-      (acc, genre)=> {
-        acc + (genre->word2VecModelGenres.transform(genre).toArray)
-      }
-    }
-
-    // creating Array[Try[Vector]] for genres to vectors
-    val vta = for(word <- splitWords) yield Try(word2VecModelGenres.transform(word))
-
-    // removing failed trys
-    val sa = for (vt <- vta if (vt.isSuccess)) yield findSimilarGenre(vt.get, map)
-
-    // getting best or most frequently occurring genres for vectors of all words
-    val distinct = sa.distinct
-    val bestGenre = distinct.foldLeft(("",0)){(acc, genre) => {
-      val c = sa.count(_.equals(genre))
-      if (c > acc._2) (genre,c) else (acc._1,acc._2)
-    }}
-
-    val predictedGenre = bestGenre._1
-    println("Predicted Genre using Word2Vec Pipeline" + predictedGenre)
-    // W2V Sample Testing Ends
+    word2VecModelGenres.save(spark, word2VecModelSaveDir)
 
   }
 
@@ -382,8 +355,8 @@ object MainClass {
     // Run cross-validation, and choose the best set of parameters.
     val cvModel = cv.fit(clean_lyrics)
 
-    val cvModelSaveDir = lyricsModelDirectoryPath + "/word2vec/cvmodel/"
-    cvModel.write.overwrite().save("s3a://sparkprojectbucket/crossvalidatormodel")
+    val cvModelSaveDir = lyricsModelDirectoryPath + "/word2vec/cvmodel/finalpresentation/"
+    cvModel.write.overwrite().save(cvModelSaveDir)
 
   }
 
@@ -520,14 +493,19 @@ object MainClass {
     )).toDF("id", "clean_lyrics", "genre")*/
 
 
+
+
     // extracting Reading Score and Rhyme Scheme
     val rsAndRhymeScheme = extractRSAndRhymeScheme(dataf, spark)
 
     // Cleaning, tokenizing, stop word removing, Extracting Top words by features
     val lyricsFeatures = extractFeaturesForLyrics(rsAndRhymeScheme)
 
+
+    predictWord2Vec(spark.sparkContext)
+
     //Directory to load the saved model from
-    val cvModelSaveDir = lyricsModelDirectoryPath + "/word2vec/cvmodel/"
+    val cvModelSaveDir = lyricsModelDirectoryPath + "/word2vec/cvmodel/finalpresentation/"
 
     //Load the saved model
     val cvModel = CrossValidatorModel.load(cvModelSaveDir)
@@ -544,6 +522,46 @@ object MainClass {
       }
   }
 
+
+  def predictWord2Vec(spark: SparkContext): Unit = {
+    // sample test word2vec model start
+    val word2VecModelSaveDir = lyricsModelDirectoryPath + "/word2vec/word2vec/finalpresentation/"
+
+
+    val word2VecModelGenres = Word2VecModel.load(spark, word2VecModelSaveDir)
+    val unknownlyrics2 = "This is me for forever One of the lost ones The one without a name Without an honest heart as compass This is me for forever One without a name These lines the last endeavor To find the missing lifeline Oh how I wish For soothing rain All I wish is to dream again My loving heart Lost in the dark For hope I'd give my everything My flower, withered between The pages two and three The once and forever bloom gone with my sins\nWalk the dark path\nSleep with angels\nCall the past for help\nTouch me with your love\nAnd reveal to me my true name\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nNemo sailing home\nNemo letting go\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nName for evermore"
+    val splitSentences = unknownlyrics2.split("\\r?\\n{1,}")
+    val splitWords = unknownlyrics2.replaceAll("\\n"," ").trim.split("\\s+")
+
+    for {
+      sentence <- splitWords
+    } (println(sentence))
+
+    // creating map of genres and their respective vectors
+    val list = List("pPop" , "Rock", "Electronic", "Hip-Hop", "Metal", "Jazz", "Folk", "Not Available", "R&B",  "Other", "Country", "Indie")
+    val map = list.foldLeft(ListMap[String, Array[Double]]()) {
+      (acc, genre)=> {
+        acc + (genre->word2VecModelGenres.transform(genre).toArray)
+      }
+    }
+
+    // creating Array[Try[Vector]] for genres to vectors
+    val vta = for(word <- splitWords) yield Try(word2VecModelGenres.transform(word))
+
+    // removing failed trys
+    val sa = for (vt <- vta if (vt.isSuccess)) yield findSimilarGenre(vt.get, map)
+
+    // getting best or most frequently occurring genres for vectors of all words
+    val distinct = sa.distinct
+    val bestGenre = distinct.foldLeft(("",0)){(acc, genre) => {
+      val c = sa.count(_.equals(genre))
+      if (c > acc._2) (genre,c) else (acc._1,acc._2)
+    }}
+
+    val predictedGenre = bestGenre._1
+    println("Predicted Genre using Word2Vec Pipeline" + predictedGenre)
+    // W2V Sample Testing Ends
+  }
 
   /**
     *
