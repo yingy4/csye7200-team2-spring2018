@@ -40,10 +40,16 @@ object MainClass {
 
     if(!args.isEmpty && args.head.equals("local")) {
 
+      // create spark config
+      import GitIgnoredMethods._
+      val conf = setSparkConfWithAccessKey(new SparkConf()
+        .set("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem"))
+
       // application running locally
       val spark = SparkSession
         .builder()
         .appName("GenrePredictorFromLyrics")
+        .config(conf)
         .master("local")
         .getOrCreate()
 
@@ -94,7 +100,7 @@ object MainClass {
         .option("header", "true") //reading the headers
         .option("mode", "DROPMALFORMED")
         .option("multiLine", true)
-        .load("E:\\C drive\\NEU\\Scala\\Final\\datasets\\kaggle\\train.csv")// Give correct path here.
+        .load("s3a://sparkprojectbucket/lyricsSmallSet.csv")// Give correct path here.
       //Rohan's path :E:\C drive\NEU\Scala\Final\datasets\kaggle\
       //C:\Users\kunal\Documents\Scala\Scala project\csye7200-team2-spring2018\src\main\resources\subset.csv
       return dataf
@@ -290,7 +296,7 @@ object MainClass {
     } (println(sentence))
 
     // creating map of genres and their respective vectors
-    val list = List("Genre" , "Pop" , "Rock", "Electronic", "Hip-Hop", "Metal", "Jazz", "Folk", "Not Available","R&B",  "Other", "Country", "Indie")
+    val list = List("Pop" , "Rock", "Electronic", "Hip-Hop", "Metal", "Jazz", "Folk", "Not Available","R&B",  "Other", "Country", "Indie")
     val map = list.foldLeft(ListMap[String, Array[Double]]()) {
       (acc, genre)=> {
         acc + (genre->word2VecModelGenres.transform(genre).toArray)
