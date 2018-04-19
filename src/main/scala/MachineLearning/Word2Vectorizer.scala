@@ -27,9 +27,23 @@ object Word2Vectorizer {
 
   def vectorizeGenres(df:DataFrame): Word2VecModel = {
     //val tempdf = df.withColumn("agg_clean_lyrics", df("clean_lyrics"))
-    df.show(2,false)
-    val rdd = df.rdd.map(row => row.getSeq(1))
+    df.show(false)
+    val rdd = df.rdd.map(row => {
+      val genre = row.getString(0)
+
+      val returnSeq = row.getSeq(1).foldLeft((1, Seq("")))((acc, word) => {
+        if(acc._1 % 10 == 0)
+          (acc._1 + 1, acc._2 :+ genre :+ word)
+        else
+          (acc._1 + 1, acc._2 :+ word)
+      })
+      returnSeq._2
+    })
+
+
     rdd.collect()(0) foreach println
+
+
 
     val word2VecModel = new Word2Vec().setMinCount(1).fit(rdd)
     word2VecModel

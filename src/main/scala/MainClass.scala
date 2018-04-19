@@ -152,6 +152,8 @@ object MainClass {
     trainCrossValidatorModel(clean_lyrics)
 
 
+    //val artistsFrequency =ArtistsFrequency.filterByArtistFrequency(clean_lyrics)
+    //val genresFrequency =GenreFrequency.filterByGenreFrequency(clean_lyrics)
 
     //testtrain(spark, songTopWords)
 
@@ -296,7 +298,7 @@ object MainClass {
     } (println(sentence))
 
     // creating map of genres and their respective vectors
-    val list = List("Pop" , "Rock", "Electronic", "Hip-Hop", "Metal", "Jazz", "Folk", "Not Available","R&B",  "Other", "Country", "Indie")
+    val list = List("pop" , "rock", "electronic", "hip", "metal", "jazz", "folk", "available", "r&b",  "other", "country", "indie")
     val map = list.foldLeft(ListMap[String, Array[Double]]()) {
       (acc, genre)=> {
         acc + (genre->word2VecModelGenres.transform(genre).toArray)
@@ -409,9 +411,7 @@ object MainClass {
                                                    t._6.isSuccess &&
                                                    t._7.isSuccess &&
                                                    t._8.isSuccess)}
-    yield {
-      val genre = t._5.get
-      Row(t._1.get, t._2.get, t._3.get, t._4.get, t._5.get, t._6.get, t._7.get, t._8.get, t._6.get.replaceAll("[\\n]",s" $genre \n")) }
+    yield { Row(t._1.get, t._2.get, t._3.get, t._4.get, t._5.get, t._6.get, t._7.get, t._8.get) }
 
 
     val schema = StructType(
@@ -422,8 +422,7 @@ object MainClass {
         StructField("genre", StringType, false) ::
         StructField("lyrics", StringType, false) ::
         StructField("rs1", DoubleType, false) ::
-        StructField("rs2", StringType, false) ::
-        StructField("lyricsWithGenre", StringType, false) :: Nil
+        StructField("rs2", StringType, false) :: Nil
     )
 
     val transformedDF = spark.createDataFrame(transformRDD3, schema)
