@@ -23,7 +23,7 @@ object GenreFrequency {
   }
 
   def groupLyrics(df:DataFrame): DataFrame = {
-    val genreCommonLyrics = df.groupBy("genre").agg(flattenTokens(collect_list(df("filtered lyrics"))).as("agg_clean_lyrics"))
+    val genreCommonLyrics = df.groupBy("genre").agg(flattenTokens(collect_list(df("clean_tokens"))).as("agg_clean_lyrics"))
     return genreCommonLyrics
   }
 }

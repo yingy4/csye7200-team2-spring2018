@@ -100,7 +100,7 @@ object MainClass {
         .option("header", "true") //reading the headers
         .option("mode", "DROPMALFORMED")
         .option("multiLine", true)
-        .load("s3a://sparkprojectbucket/lyricsSmallSet.csv")// Give correct path here.
+        .load("E:\\C drive\\NEU\\Scala\\Final\\datasets\\kaggle\\train.csv")// Give correct path here.
       //Rohan's path :E:\C drive\NEU\Scala\Final\datasets\kaggle\
       //C:\Users\kunal\Documents\Scala\Scala project\csye7200-team2-spring2018\src\main\resources\subset.csv
       return dataf
@@ -439,7 +439,7 @@ object MainClass {
     cleanedData.show(5,true)
     val wordTokenizer = WordTokenizer.tokenize(cleanedData,"clean_lyrics","clean_tokens")
     wordTokenizer.show(5,true)
-    val wordTokenizer2 = WordTokenizer.tokenize(cleanedData,"clean_lyrics2","tokenized_words")
+    val wordTokenizer2 = WordTokenizer.tokenize(wordTokenizer,"clean_lyrics2","tokenized_words")
     wordTokenizer2.show(5,true)
     val nonStpWordData = SWRemover.removeStopWords(wordTokenizer2.where(wordTokenizer2("clean_lyrics").isNotNull))
     nonStpWordData.show(5,true)
