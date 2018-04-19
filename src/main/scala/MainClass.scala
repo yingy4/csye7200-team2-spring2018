@@ -20,7 +20,7 @@ import scala.util.Try
 
 object MainClass {
   //val lyricsModelDirectoryPath = "/tmp/spark-logistic-regression-model/final/"
-  val lyricsModelDirectoryPath = "/tmp/spark-logistic-regression-model/final/test/"
+  val lyricsModelDirectoryPath = "/tmp/spark-logistic-regression-model/final/test/test2/"
   /*
   Id    Genre
   0.0 - Pop
@@ -101,7 +101,7 @@ object MainClass {
         .option("header", "true") //reading the headers
         .option("mode", "DROPMALFORMED")
         .option("multiLine", true)
-        .load("E:\\C drive\\NEU\\Scala\\Final\\datasets\\kaggle\\original.csv")// Give correct path here.
+        .load("E:\\C drive\\NEU\\Scala\\Final\\datasets\\kaggle\\test.csv")// Give correct path here.
       //Rohan's path :E:\C drive\NEU\Scala\Final\datasets\kaggle\
 
       return dataf
@@ -291,9 +291,10 @@ object MainClass {
     // train word2vec and return model
     val word2VecModelGenres = Word2Vectorizer.vectorizeGenres(genresGroup)
 
-    val word2VecModelSaveDir = lyricsModelDirectoryPath + "/word2vec/word2vec/fullcsv/finalpresentation/"
+    //val word2VecModelSaveDir = lyricsModelDirectoryPath + "/word2vec/word2vec/fullcsv/finalpresentation/"
+    val lyricsModelDirectoryPath = "/tmp/spark-logistic-regression-model/final/test/test2/"
 
-    word2VecModelGenres.save(spark, word2VecModelSaveDir)
+    word2VecModelGenres.save(spark, lyricsModelDirectoryPath)
 
   }
 
@@ -527,7 +528,10 @@ object MainClass {
 
   def predictWord2Vec(spark: SparkContext): Unit = {
     // sample test word2vec model start
-    val word2VecModelSaveDir = lyricsModelDirectoryPath + "/word2vec/word2vec/fullcsv/finalpresentation/"
+    //val word2VecModelSaveDir = lyricsModelDirectoryPath + "/word2vec/word2vec/fullcsv/finalpresentation/"
+
+    //Trained
+    val word2VecModelSaveDir = lyricsModelDirectoryPath + "/word2vec/word2vec/finalpresentation/"
 
 
     val word2VecModelGenres = Word2VecModel.load(spark, word2VecModelSaveDir)
@@ -562,7 +566,7 @@ object MainClass {
     // W2V Sample Testing Ends
   }
 
-  /**
+  /** Find similarity between 2 words by using their cosine similarity.
     *
     *
     * @param unknownwordVector

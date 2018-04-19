@@ -34,10 +34,6 @@ object Word2Vectorizer {
     }
 
 
-    rdd.collect()(0) foreach println
-
-
-
 
     val word2VecModel = new Word2Vec().setMinCount(1).fit(rdd)
     word2VecModel
