@@ -101,7 +101,7 @@ object MainClass {
         .option("header", "true") //reading the headers
         .option("mode", "DROPMALFORMED")
         .option("multiLine", true)
-        .load("E:\\C drive\\NEU\\Scala\\Final\\datasets\\kaggle\\train.csv")// Give correct path here.
+        .load("E:\\C drive\\NEU\\Scala\\Final\\datasets\\kaggle\\original.csv")// Give correct path here.
       //Rohan's path :E:\C drive\NEU\Scala\Final\datasets\kaggle\
 
       return dataf
@@ -291,7 +291,7 @@ object MainClass {
     // train word2vec and return model
     val word2VecModelGenres = Word2Vectorizer.vectorizeGenres(genresGroup)
 
-    val word2VecModelSaveDir = lyricsModelDirectoryPath + "/word2vec/word2vec/finalpresentation/"
+    val word2VecModelSaveDir = lyricsModelDirectoryPath + "/word2vec/word2vec/fullcsv/finalpresentation/"
 
     word2VecModelGenres.save(spark, word2VecModelSaveDir)
 
@@ -492,9 +492,10 @@ object MainClass {
       (6L, unknownlyrics, "unknown")
     )).toDF("id", "clean_lyrics", "genre")*/
 
+    predictWord2Vec(spark.sparkContext)
 
 
-
+/*
     // extracting Reading Score and Rhyme Scheme
     val rsAndRhymeScheme = extractRSAndRhymeScheme(dataf, spark)
 
@@ -520,25 +521,23 @@ object MainClass {
       .foreach { case Row(genre: String, prob: Vector, prediction: Double) =>
         println(s"Actual genre = $genre --> prob=$prob, prediction=$prediction")
       }
+  */
   }
 
 
   def predictWord2Vec(spark: SparkContext): Unit = {
     // sample test word2vec model start
-    val word2VecModelSaveDir = lyricsModelDirectoryPath + "/word2vec/word2vec/finalpresentation/"
+    val word2VecModelSaveDir = lyricsModelDirectoryPath + "/word2vec/word2vec/fullcsv/finalpresentation/"
 
 
     val word2VecModelGenres = Word2VecModel.load(spark, word2VecModelSaveDir)
-    val unknownlyrics2 = "This is me for forever One of the lost ones The one without a name Without an honest heart as compass This is me for forever One without a name These lines the last endeavor To find the missing lifeline Oh how I wish For soothing rain All I wish is to dream again My loving heart Lost in the dark For hope I'd give my everything My flower, withered between The pages two and three The once and forever bloom gone with my sins\nWalk the dark path\nSleep with angels\nCall the past for help\nTouch me with your love\nAnd reveal to me my true name\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nNemo sailing home\nNemo letting go\n\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nMy loving heart\nLost in the dark\nFor hope I'd give my everything\nOh how I wish\nFor soothing rain\nAll I wish is to dream again\nOnce and for all\nAnd all for once\nNemo my name forevermore\n\nName for evermore"
+    val unknownlyrics2 = "My heart is sad and lonely\nFor you I sigh, for you dear only\nWhy haven't you seen it\nI'm all for you body and soul\nI spend my days in longing\nAnd wondering why it's me you're wronging\nI tell you I mean it\nI'm all for you body and soul\nI can't believe it\nIt's hard to conceive it\nThat you'd turn away romance\nAre you pretending\nIt looks like the ending\nUnless I could have just one more chance to prove, dear\nMy life a wreck you're making\nYou know I'm yours for just the taking\nI'd gladly surrender myself to you body and soul"
     val splitSentences = unknownlyrics2.split("\\r?\\n{1,}")
     val splitWords = unknownlyrics2.replaceAll("\\n"," ").trim.split("\\s+")
 
-    for {
-      sentence <- splitWords
-    } (println(sentence))
 
     // creating map of genres and their respective vectors
-    val list = List("pPop" , "Rock", "Electronic", "Hip-Hop", "Metal", "Jazz", "Folk", "Not Available", "R&B",  "Other", "Country", "Indie")
+    val list = List("Pop" , "Rock", "Electronic", "Hip-Hop", "Metal", "Jazz", "Folk", "R&B",  "Other", "Country", "Indie")
     val map = list.foldLeft(ListMap[String, Array[Double]]()) {
       (acc, genre)=> {
         acc + (genre->word2VecModelGenres.transform(genre).toArray)
@@ -559,7 +558,7 @@ object MainClass {
     }}
 
     val predictedGenre = bestGenre._1
-    println("Predicted Genre using Word2Vec Pipeline" + predictedGenre)
+    println("Predicted Genre using Word2Vec Pipeline: " + predictedGenre)
     // W2V Sample Testing Ends
   }
 
