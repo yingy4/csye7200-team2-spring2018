@@ -143,7 +143,7 @@ object MainClass {
     trainWord2VecModel(clean_lyrics)
 
     // calling CrossValidatorModel Pipeline
-    trainCrossValidatorModel(clean_lyrics)
+    //trainCrossValidatorModel(clean_lyrics)
 
 
 
@@ -329,7 +329,8 @@ object MainClass {
       .setOutputCol("pipeline_tokenized_words")
 
     val hashingTF = new HashingTF()
-      .setInputCol(tokenizer.getOutputCol)
+      //.setInputCol(tokenizer.getOutputCol)
+      .setInputCol("filtered lyrics")
       .setOutputCol("htffeatures")
 
     val assembler = new VectorAssembler()
@@ -348,7 +349,7 @@ object MainClass {
       .setLabels(indexer.labels)
 
     val pipeline = new Pipeline()
-      .setStages(Array(hasher, tokenizer, hashingTF, assembler, indexer, lr, converter))
+      .setStages(Array(hasher, hashingTF, assembler, indexer, lr, converter))
 
     // We use a ParamGridBuilder to construct a grid of parameters to search over.
     // With 3 values for hashingTF.numFeatures and 2 values for lr.regParam,
@@ -427,16 +428,23 @@ object MainClass {
 
 
   def extractFeaturesForLyrics(transformedDF : DataFrame) : DataFrame = {
+    transformedDF.show(5,true)
     val cleanedData = DataCleaner.cleanTrain(transformedDF)
-    val wordTokenizer = WordTokenizer.tokenize(cleanedData,"clean_lyrics","tokenized_words")
+    cleanedData.show(5,true)
+    val wordTokenizer = WordTokenizer.tokenize(cleanedData,"clean_lyrics2","tokenized_words")
+    wordTokenizer.show(5,true)
     val nonStpWordData = SWRemover.removeStopWords(wordTokenizer.where(wordTokenizer("clean_lyrics").isNotNull))
-    val swRemovedWordTokenizer = WordTokenizer.tokenize(nonStpWordData,"filtered lyrics","words")
-    val songTopWords = SongTokenizer.tokenizeSongs(swRemovedWordTokenizer)
+    nonStpWordData.show(5,true)
+    /*val swRemovedWordTokenizer = WordTokenizer.tokenize(nonStpWordData,"filtered lyrics","words")
+    swRemovedWordTokenizer.show(5,true)*/
+    val songTopWords = SongTokenizer.tokenizeSongs(nonStpWordData)
+    songTopWords.show(5,true)
 
-    val clean_lyrics = DataCleaner.cleanTrain(songTopWords)
+    //val clean_lyrics = DataCleaner.cleanTrain(songTopWords)
+    //clean_lyrics.show(5, true)
     //val clean = DataCleaner.cleanGenre(clean_lyrics)
 
-    return clean_lyrics
+    return songTopWords
   }
 
 

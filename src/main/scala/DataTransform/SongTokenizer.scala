@@ -5,6 +5,8 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.{collect_list, regexp_replace, udf}
 
 import scala.collection.immutable.ListMap
+import org.apache.spark.sql.functions._
+
 
 object SongTokenizer {
 
@@ -15,7 +17,7 @@ object SongTokenizer {
   })
 
   def tokenizeSongs(df:DataFrame): DataFrame = {
-    val dataframe  = df.withColumn("song_top_words", flattenTokensAndCount(df("clean_lyrics")))
+    val dataframe  = df.withColumn("song_top_words", flattenTokensAndCount(df("clean_lyrics2")))
     return dataframe
   }
 }

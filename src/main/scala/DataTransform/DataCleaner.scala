@@ -10,7 +10,8 @@ object DataCleaner {
 
   def cleanTrain(df:DataFrame): DataFrame = {
     val dataframe = df.where(df("lyrics").isNotNull).withColumn("clean_lyrics", regexp_replace(df("lyricsWithGenre"), "[\\',\\n,\\t,\\r,\\r\\n,\\,]", ""))
-    return dataframe
+    val dataframe2 = dataframe.where(dataframe("lyrics").isNotNull).withColumn("clean_lyrics2", regexp_replace(dataframe("lyrics"), "[\\',\\n,\\t,\\r,\\r\\n,\\,]", ""))
+    return dataframe2
   }
 
 

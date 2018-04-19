@@ -26,12 +26,12 @@ object Word2Vectorizer {
   */
 
   def vectorizeGenres(df:DataFrame): Word2VecModel = {
-    val word2VecModel = new Word2Vec().setMinCount(2).fit(df.withColumn("lyricsWithGenre", df("lyricsWithGenre")).rdd.map(row => Seq(row.getString(0))))
+    val word2VecModel = new Word2Vec().setMinCount(2).fit(df.withColumn("clean_lyrics", df("clean_lyrics")).rdd.map(row => row.getString(0).split("\\s+").toSeq))
     word2VecModel
   }
 
   def vectorizeArtists(df:DataFrame): Word2VecModel = {
-    val word2VecModel = new Word2Vec().setMinCount(2).fit(df.withColumn("lyricsWithGenre", df("lyricsWithGenre")).rdd.map(row => Seq(row.getString(0))))
+    val word2VecModel = new Word2Vec().setMinCount(2).fit(df.withColumn("clean_lyrics", df("clean_lyrics")).rdd.map(row => row.getString(0).split("\\s+").toSeq))
     word2VecModel
   }
 
