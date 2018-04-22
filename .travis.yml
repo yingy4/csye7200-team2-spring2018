@@ -1,5 +1,13 @@
 language: scala
 scala:
    - 2.11.12
+sudo: false
 script:
    - sbt test
+notifications:
+  email:
+    recipients:
+      - jahagirdar.ro@husky.neu.edu
+      - chugh.k@husky.neu.edu
+  on_success: always
+  on_failure: always
