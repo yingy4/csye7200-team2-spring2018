@@ -21,9 +21,6 @@ libraryDependencies += "org.apache.spark" %% "spark-core" % "2.3.0" % "provided"
 // https://mvnrepository.com/artifact/com.mashape.unirest/unirest-java
 libraryDependencies += "com.mashape.unirest" % "unirest-java" % "1.4.9"
 
-// https://mvnrepository.com/artifact/org.json/json
-//libraryDependencies += "org.json" % "json" % "20140107"
-
 //libraryDependencies += "org.scalatest" % "scalatest_2.12" % "3.0.5" % "test"
   libraryDependencies += "org.scalatest" % "scalatest_2.11" % "3.0.5" % "test"
 
@@ -56,4 +53,3 @@ assemblyMergeStrategy in assembly := {
     val oldStrategy = (assemblyMergeStrategy in assembly).value
     oldStrategy(x)
 }
-*/

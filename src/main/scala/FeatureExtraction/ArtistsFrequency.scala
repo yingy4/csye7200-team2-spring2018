@@ -18,7 +18,7 @@ object ArtistsFrequency {
 
   val flattenTokens = udf((xs: Seq[Seq[String]]) => xs.flatten.distinct)
 
-
+/*
   def filterByArtistFrequency(df:DataFrame): DataFrame = {
     val artistCommonWords = df.groupBy("artist").agg(flattenTokensAndCount(collect_list(df("words"))).as("artists_tokens"))
     //artistCommonWords.show(false)
@@ -29,5 +29,5 @@ object ArtistsFrequency {
     val artistCommonLyrics = df.groupBy("artist").agg(flattenTokens(collect_list(df("words"))).as("tokenized_words"))
     //artistCommonLyrics.show(false)
     return artistCommonLyrics
-  }
+  }*/
 }

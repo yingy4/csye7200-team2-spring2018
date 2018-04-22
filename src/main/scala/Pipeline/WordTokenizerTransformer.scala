@@ -7,6 +7,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, Dataset}
 
+/*
 
 class WordTokenizerTransformer extends Transformer {
   final val inputCol= "lyrics"
@@ -58,3 +59,4 @@ class WordTokenizerTransformer extends Transformer {
 
   override val uid: String = "wt"
 }
+*/

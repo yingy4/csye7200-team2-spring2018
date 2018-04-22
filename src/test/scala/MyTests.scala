@@ -2,8 +2,11 @@
 import org.scalatest.FlatSpec
 import FeatureExtraction.Utility._
 import DataTransform._
+import FeatureExtraction.Utility
 import org.apache.spark
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+
+import scala.util.Try
 
 class MyTests extends FlatSpec{
   "ssml" should "have 4 occurences in smlssmllmslmssmlslssmlssml" in {
@@ -91,4 +94,68 @@ class MyTests extends FlatSpec{
       swremoved_length
     }
   }
+
+
+  "Utility flattenNestedTuple6 " should " test successfully " in{
+    val testResult = (Try(1), Try("Stairway To Heaven"), Try(1971), Try("Led Zeplin") , Try("Rock"), Try("There's a lady who's sure" +
+      "\nAll that glitters is gold" +
+      "\nAnd she's buying a stairway to heaven" +
+      "\nWhen she gets there she knows" +
+      "\nIf the stores are all closed" +
+      "\nWith a word she can get what she came for" +
+      "\nOh oh oh oh and she's buying a stairway to heaven"), Try(10.0))
+    assertResult(testResult) {
+      lazy val spark: SparkSession = {
+        SparkSession
+          .builder()
+          .master("local")
+          .appName("spark test example")
+          .getOrCreate()
+      }
+
+      val test_df = spark.createDataFrame(Seq(
+        (6L, " Testing Non-SW Removed Dataframe With Five Words ")
+      )).toDF("id", "lyrics")
+
+      val test2 = ((Try(1), Try("Stairway To Heaven"), Try(1971), Try("Led Zeplin") , Try("Rock"),
+        Try("There's a lady who's sure" +
+          "\nAll that glitters is gold" +
+          "\nAnd she's buying a stairway to heaven" +
+          "\nWhen she gets there she knows" +
+          "\nIf the stores are all closed" +
+          "\nWith a word she can get what she came for" +
+          "\nOh oh oh oh and she's buying a stairway to heaven")), Try(10.0))
+
+      val flattenedList = Utility.flattenNestedTuple6(test2)
+      flattenedList
+    }
+  }
+
+
+
+
+
+  "CLean Data " should " test successfully " in{
+    lazy val spark: SparkSession = {
+      SparkSession
+        .builder()
+        .master("local")
+        .appName("spark test example")
+        .getOrCreate()
+    }
+
+    val result_df = spark.createDataFrame(Seq(
+      (6L, "There's a lady who's sure", "Theres a lady whos sure")
+    )).toDF("id", "lyrics", "clean_lyrics")
+
+    assertResult(result_df.rdd.first().getString(2)) {
+      val test_df = spark.createDataFrame(Seq(
+        (6L, "There's a lady who's sure")
+      )).toDF("id", "lyrics")
+      val cleanText = DataCleaner.cleanTrain(test_df)
+      cleanText.rdd.first().getString(2)
+    }
+  }
+
 }
+

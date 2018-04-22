@@ -3,7 +3,7 @@ package Pipeline
 import org.apache.spark.ml.PipelineModel
 import org.apache.spark.ml.tuning.CrossValidatorModel
 import org.apache.spark.sql.SparkSession
-
+/*
 abstract class MainPipeline extends LyricsPipeline {
 
   val outputDir = "/tmp/spark-logistic-regression-model"
@@ -22,4 +22,4 @@ abstract class MainPipeline extends LyricsPipeline {
     case _ => println(crossValidatorModel.getClass)
   }
 
-}
+}*/

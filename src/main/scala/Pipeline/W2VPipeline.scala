@@ -12,6 +12,7 @@ import org.apache.spark.sql.types.StructType
 
 import scala.collection.mutable
 
+/*
 
 class W2VPipeline(spark: SparkSession) extends  MainPipeline {
 
@@ -89,4 +90,4 @@ class W2VPipeline(spark: SparkSession) extends  MainPipeline {
   }
 
 
-}
+}*/

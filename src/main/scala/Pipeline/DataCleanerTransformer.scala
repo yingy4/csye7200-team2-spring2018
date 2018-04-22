@@ -5,6 +5,7 @@ import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.sql.functions.{col, regexp_replace, _}
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, Dataset}
+/*
 
 class DataCleanerTransformer extends Transformer {
 
@@ -27,3 +28,4 @@ class DataCleanerTransformer extends Transformer {
 
   override val uid: String = "dc"
 }
+*/

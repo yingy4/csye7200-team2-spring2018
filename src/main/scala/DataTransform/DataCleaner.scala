@@ -14,6 +14,7 @@ object DataCleaner {
     return dataframe
   }
 
+/*
 
   def cleanPredict(df:DataFrame): DataFrame = {
     val dataframe = df.where(df("lyrics").isNotNull).withColumn("clean_lyrics", regexp_replace(df("lyrics"), "[\\',\\n,\\t,\\r,\\r\\n,\\,]", ""))
@@ -97,6 +98,7 @@ object DataCleaner {
     val dataframe = df.where(df("clean_lyrics").isNotNull).withColumn("genre", regexp_replace(df("genre"), "Indie", "11.0"))
     return dataframe
   }
+*/
 
 
 

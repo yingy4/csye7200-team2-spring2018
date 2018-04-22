@@ -382,8 +382,11 @@ object MainClass {
 
     // Run cross-validation, and choose the best set of parameters.
     val cvModel = cv.fit(indexerout)
+    //cvModel.save(spark.sparkContext,"s3://...file_path.../")
 
     println("CV Model fit")
+    cvModel.save("")
+    println("CV Model fit Saved.")
 
 
 

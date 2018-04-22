@@ -6,6 +6,7 @@ import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, Dataset}
 
+/*
 class SWRemoverTransformer extends Transformer {
   final val inputCol= "tokenized_words"
   final val outputCol = "filtered_lyrics"
@@ -50,3 +51,4 @@ class SWRemoverTransformer extends Transformer {
 
   override val uid: String = "sw"
 }
+*/
