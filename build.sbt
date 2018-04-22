@@ -10,25 +10,22 @@ scalaVersion := "2.11.11"
 libraryDependencies += "org.apache.hadoop" % "hadoop-aws" % "2.7.3"
 
 // https://mvnrepository.com/artifact/org.apache.spark/spark-mllib
-libraryDependencies += "org.apache.spark" %% "spark-mllib" % "2.3.0"
+libraryDependencies += "org.apache.spark" %% "spark-mllib" % "2.3.0" % "provided"
 
 // https://mvnrepository.com/artifact/org.apache.spark/spark-sql
-libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.3.0"
+libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.3.0" % "provided"
 
 // https://mvnrepository.com/artifact/org.apache.spark/spark-core
-libraryDependencies += "org.apache.spark" %% "spark-core" % "2.3.0"
+libraryDependencies += "org.apache.spark" %% "spark-core" % "2.3.0" % "provided"
 
 // https://mvnrepository.com/artifact/com.mashape.unirest/unirest-java
 libraryDependencies += "com.mashape.unirest" % "unirest-java" % "1.4.9"
 
-// https://mvnrepository.com/artifact/com.databricks/spark-csv
-libraryDependencies += "com.databricks" %% "spark-csv" % "1.5.0"
-
 // https://mvnrepository.com/artifact/org.json/json
-libraryDependencies += "org.json" % "json" % "20140107"
+//libraryDependencies += "org.json" % "json" % "20140107"
 
 //libraryDependencies += "org.scalatest" % "scalatest_2.12" % "3.0.5" % "test"
-libraryDependencies += "org.scalatest" % "scalatest_2.11" % "3.0.5" % "test"
+  libraryDependencies += "org.scalatest" % "scalatest_2.11" % "3.0.5" % "test"
 
 /*
 assemblyMergeStrategy in assembly := {

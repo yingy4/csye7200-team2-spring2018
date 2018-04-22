@@ -4,16 +4,16 @@
 import DataTransform._
 import FeatureExtraction._
 import MachineLearning.Word2Vectorizer
-import org.apache.spark.mllib.feature.{Word2Vec, Word2VecModel}
-import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.classification.LogisticRegression
-import org.apache.spark.ml.evaluation.{MulticlassClassificationEvaluator, RegressionEvaluator}
+import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature._
-import org.apache.spark.ml.tuning.{CrossValidator, CrossValidatorModel, ParamGridBuilder}
+import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
+import org.apache.spark.mllib.feature.Word2VecModel
 import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.immutable.ListMap
 import scala.util.Try
@@ -39,12 +39,16 @@ object MainClass {
 
   def main(args: Array[String]): Unit = {
 
-    if(!args.isEmpty && args.head.equals("local")) {
+    val access_key = args.head
+    val secret_key = args(1)
+    val runMode = args(2)
+    
+    val conf = new SparkConf()
+      .set("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+      .set("spark.hadoop.fs.s3a.access.key", access_key)
+      .set("spark.hadoop.fs.s3a.secret.key", secret_key)
 
-      // create spark config
-      import GitIgnoredMethods._
-      val conf = setSparkConfWithAccessKey(new SparkConf()
-        .set("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem"))
+    if(!args.isEmpty && runMode.equals("local")) {
 
       // application running locally
       val spark = SparkSession
@@ -74,9 +78,6 @@ object MainClass {
 
     } else {
       // application running on EMR
-      import GitIgnoredMethods._
-      val conf = setSparkConfWithAccessKey(new SparkConf()
-        .set("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem"))
 
       val spark = SparkSession
         .builder()
