@@ -15,7 +15,7 @@ object SWRemover {
 
 
     val remover = new StopWordsRemover()
-      .setInputCol("tokenized_words")
+      .setInputCol("clean_tokens")
       .setOutputCol("filtered lyrics")
       .setStopWords(stop_words)
     val output = remover.transform(df)

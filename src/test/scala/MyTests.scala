@@ -1,4 +1,4 @@
-/*
+
 import org.scalatest.FlatSpec
 import FeatureExtraction.Utility._
 import DataTransform._
@@ -30,6 +30,27 @@ class MyTests extends FlatSpec{
     }
   }
 
+
+  "tokenizer with lines" should "have 10 tokens " in {
+    assertResult(11) {
+      lazy val spark: SparkSession = {
+        SparkSession
+          .builder()
+          .master("local")
+          .appName("spark test example")
+          .getOrCreate()
+      }
+
+      val test_df = spark.createDataFrame(Seq(
+        (6L, " Testing Dataframes With Five Words\\n Testing Dataframes With Five Words")
+      )).toDF("id", "lyrics")
+
+      val tokens = WordTokenizer.tokenize(test_df, "lyrics" , "lyrics_tokens")
+      //tokens.rdd.collect()(0)
+      tokens.select("lyrics_tokens").limit(1).first().getSeq(0).length
+    }
+  }
+
   "swremoval " should "have 13 tokens  without removal and 7 after removal " in {
     assertResult(7) {
       lazy val spark: SparkSession = {
@@ -50,4 +71,3 @@ class MyTests extends FlatSpec{
     }
   }
 }
-*/

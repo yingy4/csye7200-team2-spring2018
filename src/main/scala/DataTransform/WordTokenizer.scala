@@ -13,10 +13,8 @@ object WordTokenizer {
       .setInputCol(inColumnName)
       .setOutputCol(outColumnName)
       .setPattern("\\W")
-    val countTokens = udf { (words: Seq[String]) => words.length }
 
     val out = regexTokenizer.transform(df)
-      .withColumn("tokens", countTokens(col(outColumnName)))
     out
   }
 }

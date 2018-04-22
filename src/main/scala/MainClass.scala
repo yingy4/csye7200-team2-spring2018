@@ -8,7 +8,7 @@ import org.apache.spark.mllib.feature.{Word2Vec, Word2VecModel}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.classification.LogisticRegression
-import org.apache.spark.ml.evaluation.RegressionEvaluator
+import org.apache.spark.ml.evaluation.{MulticlassClassificationEvaluator, RegressionEvaluator}
 import org.apache.spark.ml.feature._
 import org.apache.spark.ml.tuning.{CrossValidator, CrossValidatorModel, ParamGridBuilder}
 import org.apache.spark.mllib.linalg.Vector
@@ -53,6 +53,7 @@ object MainClass {
         .config(conf)
         .master("local")
         .getOrCreate()
+
 
       import scala.util.control.Breaks.{break, breakable}
       breakable {
@@ -103,8 +104,8 @@ object MainClass {
         .option("multiLine", true)
         .load("E:\\C drive\\NEU\\Scala\\Final\\datasets\\kaggle\\test.csv")// Give correct path here.
       //Rohan's path :E:\C drive\NEU\Scala\Final\datasets\kaggle\
+      dataf
 
-      return dataf
     } else if (str.equals("TrainEMR")){
 
       //.format("csv")
@@ -135,22 +136,31 @@ object MainClass {
   def train(spark: SparkSession, dataf : DataFrame) ={
 
 
+  //  dataf.show(true)
     // extract Readability Score and Rhyme Scheme
     val transformedDF = extractRSAndRhymeScheme(dataf, spark)
-
+    //transformedDF.show(2, false)
+ //   transformedDF.show(true)
     println("End of RS and Rhyme Scheme Extraction.")
 
     // clean, tokenize, remove stop words from lyrics column
-    val clean_lyrics  = extractFeaturesForLyrics(transformedDF)
+    val clean_lyrics  = extractFeaturesForLyrics(spark, transformedDF)
+
 
     println("End Lyrics Feature Extraction.")
+    clean_lyrics.show(true)
 
+    trainCrossValidatorModel(clean_lyrics)
+
+
+
+//    clean_lyrics.show(1, false)
 
     // calling Word2Vec Pipeline
-    trainWord2VecModel(clean_lyrics, spark.sparkContext)
+  //  trainWord2VecModel(clean_lyrics, spark.sparkContext)
 
     // calling CrossValidatorModel Pipeline
-   // trainCrossValidatorModel(clean_lyrics)
+    //trainCrossValidatorModel(clean_lyrics)
 
 
 
@@ -302,13 +312,15 @@ object MainClass {
 
     // Configure an ML pipeline, which consists of three stages: hasher, tokenizer, hashingTF, assembler, and lr.
     val hasher = new FeatureHasher()
-      .setInputCols("rs1", "rs2")
-      .setOutputCol("fhfeatures")
-      .setCategoricalCols(Array("rs2"))
+      .setInputCols("rs1", "rs2", "top1" , "top2" , "top3")
+      .setOutputCol("features")
+      .setCategoricalCols(Array("rs2", "top1" , "top2" , "top3"))
 
     val tokenizer = new Tokenizer()
       .setInputCol("clean_lyrics")
       .setOutputCol("pipeline_tokenized_words")
+
+    /*
 
     val hashingTF = new HashingTF()
       //.setInputCol(tokenizer.getOutputCol)
@@ -319,25 +331,71 @@ object MainClass {
       .setInputCols(Array("htffeatures", "fhfeatures"))
       .setOutputCol("features")
 
-    val indexer = new StringIndexer().setInputCol("genre").setOutputCol("genre_code").fit(clean_lyrics).setHandleInvalid("skip")
+*/
+    val indexer = new StringIndexer().setInputCol("genre").setOutputCol("label").fit(clean_lyrics).setHandleInvalid("skip")
     // indexed.show(false)
 
     val lr = new LogisticRegression()
-      .setMaxIter(1).setLabelCol("genre_code")
+      .setMaxIter(10)
+      .setRegParam(0.3)
+      .setLabelCol("label")
 
     val converter = new IndexToString()
       .setInputCol("prediction")
       .setOutputCol("predicted genre")
       .setLabels(indexer.labels)
 
+
+
+
+
+    val hasherout = hasher.transform(clean_lyrics)
+    hasherout.show(true)
+
+
+
+    //val tokenizer_out = tokenizer.transform(hasherout)
+    val indexerout = indexer.transform(hasherout)
+    indexerout.show(true)
+
+  //  val lrout = lr.fit(indexerout)
+
+    println("LR Model fit done.")
+
     val pipeline = new Pipeline()
-      .setStages(Array(hasher, hashingTF, assembler, indexer, lr, converter))
+      .setStages(Array(lr, converter))
+
+    val paramGrid = new ParamGridBuilder()
+      .addGrid(lr.regParam, Array(0.3, 0.01))
+      .build()
+
+
+    val cv = new CrossValidator()
+      .setEstimator(pipeline)
+      .setEvaluator(new MulticlassClassificationEvaluator().setLabelCol("label").setPredictionCol("prediction"))
+      .setEstimatorParamMaps(paramGrid)
+      .setNumFolds(3)  // Use 3+ in practice
+      .setParallelism(2)  // Evaluate up to 2 parameter settings in parallel
+
+
+
+    // Run cross-validation, and choose the best set of parameters.
+    val cvModel = cv.fit(indexerout)
+
+    println("CV Model fit")
+
+
+
+    //Commented for testing without pipeline
+     /*
+
+    val pipeline = new Pipeline()
+      .setStages(Array(hasher, indexer, lr, converter))
 
     // We use a ParamGridBuilder to construct a grid of parameters to search over.
     // With 3 values for hashingTF.numFeatures and 2 values for lr.regParam,
     // this grid will have 3 x 2 = 6 parameter settings for CrossValidator to choose from.
     val paramGrid = new ParamGridBuilder()
-      .addGrid(hashingTF.numFeatures, Array(10, 100, 1000))
       .addGrid(lr.regParam, Array(0.1, 0.01))
       .build()
 
@@ -356,9 +414,17 @@ object MainClass {
     // Run cross-validation, and choose the best set of parameters.
     val cvModel = cv.fit(clean_lyrics)
 
-    val cvModelSaveDir = lyricsModelDirectoryPath + "/word2vec/cvmodel/finalpresentation/"
-    cvModel.write.overwrite().save(cvModelSaveDir)
 
+
+
+  //  val cvModelSaveDir = lyricsModelDirectoryPath + "/word2vec/cvmodel/finalpresentation/"
+  //  cvModel.write.overwrite().save(cvModelSaveDir)
+
+
+
+
+
+    */
   }
 
 
@@ -371,11 +437,32 @@ object MainClass {
         Try(row.getString(4)),
         Try(row.getString(5)) ))
 
+
+    println("count: " + rootRDD.count())
     // transform with Readability Score feature
     val transformRDD1 = (rootRDD zip ReadabilityScore.transformWithScore(rootRDD)) map (Utility.flattenNestedTuple6)
 
+    println("Transform1rdd count: " + transformRDD1.count())
+
+    for (t <- transformRDD1) {
+      for {t1 <- t._1
+           t2 <- t._2
+           t3 <- t._3
+           t4 <- t._4
+           t5 <- t._5
+           t6 <- t._6
+           t7 <- t._7
+           //t8 <- t._8
+      } {
+        println(t1 + " " + t2 + " " + t3 + " " + t4 + " " + t5 + " " + t6 + " " + t7 + " ")
+      }
+    }
     // transform with Rhyme Scheme feature
     val transformRDD2 = (transformRDD1 zip RhymeScheme.transformWithRhymeScheme(rootRDD)) map (Utility.flattenNestedTuple7)
+    println("Transform2RDD count: " + transformRDD2.count())
+
+
+
 
     val transformRDD3 = for {t <- transformRDD2 if(t._1.isSuccess &&
                                                    t._2.isSuccess &&
@@ -385,13 +472,11 @@ object MainClass {
                                                    t._6.isSuccess &&
                                                    t._7.isSuccess &&
                                                    t._8.isSuccess)}
-    yield { Row(t._1.get, t._2.get, t._3.get, t._4.get, t._5.get, t._6.get, t._7.get, t._8.get) }
+    yield { Row(t._4.get, t._5.get, t._6.get, t._7.get, t._8.get) }
 
+    println("Transform3 rdd count: " + transformRDD3.count())
 
     val schema = StructType(
-      StructField("index", IntegerType, false) ::
-        StructField("song", StringType, false) ::
-        StructField("year", IntegerType, false) ::
         StructField("artist", StringType, false) ::
         StructField("genre", StringType, false) ::
         StructField("lyrics", StringType, false) ::
@@ -406,20 +491,23 @@ object MainClass {
   }
 
 
-  def extractFeaturesForLyrics(transformedDF : DataFrame) : DataFrame = {
+  def extractFeaturesForLyrics(spark:SparkSession, transformedDF : DataFrame) : DataFrame = {
     transformedDF.show(5,true)
     val cleanedData = DataCleaner.cleanTrain(transformedDF)
-    cleanedData.show(5,true)
+    cleanedData.show(true)
+    println("added clean_lyrics col")
     val wordTokenizer = WordTokenizer.tokenize(cleanedData,"clean_lyrics","clean_tokens")
-    wordTokenizer.show(5,true)
-    val wordTokenizer2 = WordTokenizer.tokenize(wordTokenizer,"clean_lyrics2","tokenized_words")
-    wordTokenizer2.show(5,true)
-    val nonStpWordData = SWRemover.removeStopWords(wordTokenizer2.where(wordTokenizer2("clean_lyrics").isNotNull))
-    nonStpWordData.show(5,true)
+    wordTokenizer.show(true)
+    println("added clean_tokens col")
+    //val wordTokenizer2 = WordTokenizer.tokenize(wordTokenizer,"clean_lyrics2","tokenized_words")
+    //wordTokenizer2.show(5,true)
+    //val nonStpWordData = SWRemover.removeStopWords(wordTokenizer.where(wordTokenizer("clean_lyrics").isNotNull))
+    //println("added filtered_lyrics col")
     /*val swRemovedWordTokenizer = WordTokenizer.tokenize(nonStpWordData,"filtered lyrics","words")
     swRemovedWordTokenizer.show(5,true)*/
-    val songTopWords = SongTokenizer.tokenizeSongs(nonStpWordData)
-    songTopWords.show(5,true)
+    val songTopWords = SongTokenizer.tokenizeSongs(spark, wordTokenizer)
+    songTopWords.show(true)
+    println("added top word cols")
 
     //val clean_lyrics = DataCleaner.cleanTrain(songTopWords)
     //clean_lyrics.show(5, true)
@@ -531,10 +619,10 @@ object MainClass {
     //val word2VecModelSaveDir = lyricsModelDirectoryPath + "/word2vec/word2vec/fullcsv/finalpresentation/"
 
     //Trained
-    val word2VecModelSaveDir = lyricsModelDirectoryPath + "/word2vec/word2vec/finalpresentation/"
+    //val word2VecModelSaveDir = lyricsModelDirectoryPath + "/word2vec/word2vec/finalpresentation/"
+    val lyricsModelDirectoryPath = "/tmp/spark-logistic-regression-model/final/test/test2/"
 
-
-    val word2VecModelGenres = Word2VecModel.load(spark, word2VecModelSaveDir)
+    val word2VecModelGenres = Word2VecModel.load(spark, lyricsModelDirectoryPath)
     val unknownlyrics2 = "My heart is sad and lonely\nFor you I sigh, for you dear only\nWhy haven't you seen it\nI'm all for you body and soul\nI spend my days in longing\nAnd wondering why it's me you're wronging\nI tell you I mean it\nI'm all for you body and soul\nI can't believe it\nIt's hard to conceive it\nThat you'd turn away romance\nAre you pretending\nIt looks like the ending\nUnless I could have just one more chance to prove, dear\nMy life a wreck you're making\nYou know I'm yours for just the taking\nI'd gladly surrender myself to you body and soul"
     val splitSentences = unknownlyrics2.split("\\r?\\n{1,}")
     val splitWords = unknownlyrics2.replaceAll("\\n"," ").trim.split("\\s+")

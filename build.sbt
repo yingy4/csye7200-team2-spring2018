@@ -43,4 +43,4 @@ libraryDependencies += "com.mashape.unirest" % "unirest-java" % "1.4.9"
 libraryDependencies += "org.json" % "json" % "20140107"
 
 
-libraryDependencies += "org.scalatest" % "scalatest_2.12" % "3.0.5" % "test"
+libraryDependencies += "org.scalatest" % "scalatest_2.11" % "3.0.5" % "test"
