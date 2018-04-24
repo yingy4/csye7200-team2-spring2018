@@ -16,53 +16,40 @@ object Word2Vectorizer {
   private val genreVocab = new mutable.HashMap[String, Array[Float]]()
 
 
-  /*
-  def vectorize(df:DataFrame): Word2VecModel = {
-    val word2Vec = new Word2Vec().setInputCol("words").setOutputCol("features").setVectorSize(4).setMinCount(1)
-
-    val out_df = word2Vec.fit(df)
-    out_df
-  }
-  */
-
+  /** Group by genres and create vectors for the tokens.
+    *
+    *
+    * @param df DataFrame
+    * @return Word2Vec model that is trained with the dataframe provided
+    */
   def vectorizeGenres(df:DataFrame): Word2VecModel = {
-    //val tempdf = df.withColumn("agg_clean_lyrics", df("clean_lyrics"))
-    df.show(false)
-
     val rdd = df.rdd.map{
       case Row(genre:String, agg:mutable.WrappedArray[String]) => agg.mkString(" ").concat(" ").concat(genre).trim.split(" ").toSeq
     }
-
-
-
     val word2VecModel = new Word2Vec().setMinCount(1).fit(rdd)
     word2VecModel
   }
 
+
+  /** Group by artists and create vectors for the tokens.
+    *
+    *
+    * @param df DataFrame
+    * @return Word2Vec model that is trained with the dataframe provided
+    */
   def vectorizeArtists(df:DataFrame): Word2VecModel = {
     val word2VecModel = new Word2Vec().setMinCount(2).fit(df.withColumn("clean_lyrics", df("clean_lyrics")).rdd.map(row => row.getString(0).split("\\s+").toSeq))
     word2VecModel
   }
 
-  def saveGenres(spark:SparkContext, word2VecModel: Word2VecModel): Unit = {
-    word2VecModel.save(spark, genresDir)
-  }
 
-  def saveArtists(spark: SparkContext, word2VecModel: Word2VecModel): Unit = {
-    word2VecModel.save(spark, artistsDir)
-  }
-
-
-  def loadGenres(spark: SparkContext): Word2VecModel = {
-    Word2VecModel.load(spark, genresDir)
-  }
-
-  def loadArtists(spark: SparkContext): Word2VecModel = {
-    Word2VecModel.load(spark, artistsDir)
-  }
-
-
-
+  /** Find the cosine similarity between words by their vectors.
+    *
+    *
+    * @param vec1 Vectors of first word.
+    * @param vec2 Vectors of second word.
+    * @return Similarity in cosine vectorization.
+    */
   def cosine(vec1: Array[Double], vec2: Array[Double]): Double = {
     assert(vec1.length == vec2.length, "Uneven vectors!")
     var dot, sum1, sum2 = 0.0
@@ -72,15 +59,5 @@ object Word2Vectorizer {
       sum2 += (vec2(i) * vec2(i))
     }
     dot / (math.sqrt(sum1) * math.sqrt(sum2))
-  }
-
-
-  /*def cosineArtists(word1: String, word2: String): Double = {
-    assert(containsArtists(word1) && containsArtists(word2), "Out of dictionary word! " + word1 + " or " + word2)
-   // cosine(artistsVocab.get(word1).get, artistsVocab.get(word2).get)
-  }*/
-
-  def containsArtists(word: String): Boolean = {
-    artistsVocab.get(word).isDefined
   }
 }

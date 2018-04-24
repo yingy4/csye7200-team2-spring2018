@@ -22,6 +22,12 @@ object GenreFrequency {
     return genreCommonWords
   }
 */
+
+  /**Group lyrics by genres and created agg_clean_lyrics column to hold the top 5 words per genre.
+    *
+    * @param df DataFrame to transform
+    * @return Transformed DataFrame
+    */
   def groupLyrics(df:DataFrame): DataFrame = {
     val genreCommonLyrics = df.groupBy("genre").agg(flattenTokens(collect_list(df("clean_tokens"))).as("agg_clean_lyrics"))
     return genreCommonLyrics

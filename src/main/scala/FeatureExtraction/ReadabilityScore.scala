@@ -9,10 +9,13 @@ object ReadabilityScore {
   type inType = RDD[Tuple6[Try[Int], Try[String], Try[Int], Try[String], Try[String], Try[String]]]
   type outType = RDD[Try[Double]]
 
+  /**Return the Dataframe which includes the reading score which is fetched for the lyrics by making an API call.
+    *
+    * @param inRDD RDD of tuple6
+    * @return an RDD of Try of Double
+    */
   def transformWithScore(inRDD : inType) : outType = {
-
     val outRDD = inRDD.map( rt => {
-
       val srt = for ( t <- rt._6) yield {
         val lyricsFormatted = t.replaceAll("[\"]","")
           .replaceAll("[\\n]",". ")
@@ -28,14 +31,10 @@ object ReadabilityScore {
           .getObject
           .get("FLESCH_READING")
           .asInstanceOf[Double])
-
         readingScore
-
       }
       (srt.flatten)
     })
     outRDD
   }
-
-
 }
