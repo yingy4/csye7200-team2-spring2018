@@ -1,11 +1,10 @@
 
 
 
-import java.io.File
-
 import DataTransform._
 import FeatureExtraction._
 import MachineLearning.Word2Vectorizer
+import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.classification.LogisticRegression
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
@@ -15,7 +14,6 @@ import org.apache.spark.mllib.feature.Word2VecModel
 import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.immutable.ListMap
 import scala.util.Try
@@ -25,22 +23,18 @@ object MainClass {
   val lyricsW2VModelDirectoryPath = "src\\main\\resources\\W2VModel\\lyricsModelDirectoryPath"
 
   def main(args: Array[String]): Unit = {
-    val access_key = args.head
-    val secret_key = args(1)
-    val runMode = args(2)
+    val runMode = Try(args.head)
+    val access_key= Try(args(1))
+    val secret_key = Try(args(2))
     
-    val conf = new SparkConf()
-      .set("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
-      .set("spark.hadoop.fs.s3a.access.key", access_key)
-      .set("spark.hadoop.fs.s3a.secret.key", secret_key)
 
-    if(!args.isEmpty && runMode.equals("local")) {
+
+    if(runMode.isSuccess && runMode.get.equals("local")) {
 
       // application running locally
       val spark = SparkSession
         .builder()
         .appName("GenrePredictorFromLyrics")
-        .config(conf)
         .master("local")
         .getOrCreate()
 
@@ -64,14 +58,27 @@ object MainClass {
 
     } else {
       // application running on EMR
+    if(access_key.isSuccess && secret_key.isSuccess && runMode.isSuccess) {
+
+      val conf = new SparkConf()
+        .set("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+        .set("spark.hadoop.fs.s3a.access.key", access_key.get)
+        .set("spark.hadoop.fs.s3a.secret.key", secret_key.get)
+
       val spark = SparkSession
         .builder()
         .appName("GenrePredictorFromLyrics")
         .config(conf)
         .getOrCreate()
-      
+
       // call train method
       train(spark, loadFileIntoDF(spark, "TrainEMR"))
+    } else {
+      println("Provided program arguments are not correct. \n " +
+              "Specify 'local' if running locally. \n" +
+              "Specify 'emr <access_key> <secret_key> if running on EMR")
+    }
+
     }
   }
 
@@ -99,7 +106,7 @@ object MainClass {
         .option("header", "true") //reading the headers
         .option("multiLine", true)
         .option("mode", "DROPMALFORMED")
-        .csv("s3a://sparkprojectbucket/lyrics.csv")
+        .csv("s3a://sparkprojectbucket/test.csv")
 
       return df
     } else {
