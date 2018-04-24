@@ -20,6 +20,7 @@ import scala.util.Try
 
 object MainClass {
   val lyricsModelDirectoryPath = "src\\main\\resources\\Model\\lyricsModelDirectoryPath"
+  val lyricsModelArtistDirectoryPath = "src\\main\\resources\\Model\\lyricsModelArtistDirectoryPath"
   val lyricsW2VModelDirectoryPath = "src\\main\\resources\\W2VModel\\lyricsModelDirectoryPath"
 
   def main(args: Array[String]): Unit = {
@@ -45,14 +46,20 @@ object MainClass {
           println("1 -> Train, 2 -> Predict, 3 -> End")
           val inp = scala.io.StdIn.readInt()
           println(s"User input is $inp")
-          if (inp == 3) break
+
+          println("1 -> Genre, 2 -> Artist, 3 -> End")
+          val inp2 = scala.io.StdIn.readInt()
+          println(s"User input is $inp2")
+
+          if (inp == 3 || inp2 == 3) break
+
+          val label = if (inp2 == 1) "genre" else "artist"
 
           // call train or predict method
           if (inp == 1)
-            train(spark, loadFileIntoDF(spark, "TrainLocal"))
+              train(spark, loadFileIntoDF(spark, "TrainLocal"), label)
           else
-            predict(spark, loadFileIntoDF(spark, "PredictLocal"))
-
+            predict(spark, loadFileIntoDF(spark, "PredictLocal"), label)
         }
       }
 
@@ -72,7 +79,7 @@ object MainClass {
         .getOrCreate()
 
       // call train method
-      train(spark, loadFileIntoDF(spark, "TrainEMR"))
+      train(spark, loadFileIntoDF(spark, "TrainEMR"), "genre")
     } else {
       println("Provided program arguments are not correct. \n " +
               "Specify 'local' if running locally. \n" +
@@ -127,7 +134,7 @@ object MainClass {
     * @param spark sparkSession
     * @param dataf dataframe to load and train the model.
     */
-  def train(spark: SparkSession, dataf : DataFrame) ={
+  def train(spark: SparkSession, dataf : DataFrame, label: String) ={
     // extract Readability Score and Rhyme Scheme
     val transformedDF = extractRSAndRhymeScheme(dataf, spark)
     println("End of RS and Rhyme Scheme Extraction.")
@@ -139,7 +146,7 @@ object MainClass {
     println("End Lyrics Feature Extraction.")
 
     //Training the Cross Validator Model.
-    trainCrossValidatorModel(clean_lyrics)
+    trainCrossValidatorModel(clean_lyrics, label)
 
 
     // calling Word2Vec Pipeline. Uncomment to train Word2Vec Model.
@@ -175,7 +182,7 @@ object MainClass {
     *
     * @param clean_lyrics dataframe to train the model.
     */
-  def trainCrossValidatorModel(clean_lyrics : DataFrame) = {
+  def trainCrossValidatorModel(clean_lyrics : DataFrame, label: String) = {
 
     // Configure an ML pipeline, which consists of three stages: hasher, indexer,  lr and converter.
     val hasher = new FeatureHasher()
@@ -183,7 +190,7 @@ object MainClass {
       .setOutputCol("features")
       .setCategoricalCols(Array("rs2", "top1" , "top2" , "top3"))
 
-    val indexer = new StringIndexer().setInputCol("genre").setOutputCol("label").fit(clean_lyrics).setHandleInvalid("skip")
+    val indexer = new StringIndexer().setInputCol(label).setOutputCol("label").fit(clean_lyrics).setHandleInvalid("skip")
     // indexed.show(false)
 
     val lr = new LogisticRegression()
@@ -193,7 +200,7 @@ object MainClass {
 
     val converter = new IndexToString()
       .setInputCol("prediction")
-      .setOutputCol("predicted genre")
+      .setOutputCol(s"predicted $label")
       .setLabels(indexer.labels)
 
     val hasherout = hasher.transform(clean_lyrics)
@@ -220,7 +227,10 @@ object MainClass {
     val cvModel: CrossValidatorModel = cv.fit(indexerout)
 
     println("CV Model fit")
-    cvModel.write.overwrite().save(lyricsModelDirectoryPath)
+    if (label.equals("genre"))
+      cvModel.write.overwrite().save(lyricsModelDirectoryPath)
+    else
+      cvModel.write.overwrite().save(lyricsModelArtistDirectoryPath)
     println("CV Model fit Saved.")
   }
 
@@ -297,7 +307,7 @@ object MainClass {
     * @param spark SparkSession
     * @param dataf The csv to be predicted transformed as Dataframe.
     */
-  def predict(spark:SparkSession, dataf: DataFrame ) = {
+  def predict(spark:SparkSession, dataf: DataFrame, label: String ) = {
     val rsAndRhymeScheme = extractRSAndRhymeScheme(dataf, spark)
 
     // Cleaning, tokenizing, stop word removing, Extracting Top words by features
@@ -309,7 +319,7 @@ object MainClass {
       .setCategoricalCols(Array("rs2", "top1" , "top2" , "top3"))
     val hasherout = hasher.transform(lyricsFeatures)
 
-    predictCrossValidation(hasherout)
+    predictCrossValidation(hasherout, label)
   }
 
 
@@ -377,12 +387,16 @@ object MainClass {
     *
     * @param df Dataframe of the lyrics to be predicted.
     */
-  def predictCrossValidation(df: DataFrame) = {
-    val cvModel = CrossValidatorModel.load(lyricsModelDirectoryPath)
+  def predictCrossValidation(df: DataFrame, label: String) = {
+    val cvModel = if (label.equals("genre"))
+      CrossValidatorModel.load(lyricsModelDirectoryPath)
+    else
+      CrossValidatorModel.load(lyricsModelArtistDirectoryPath)
+
     //Run prediction
     val predictedDF = cvModel.transform(df)
     println("The prediction result for the provided dataframe is aas follows:")
-    predictedDF.select("artist", "genre", "rawPrediction", "probability", "predicted genre").show(true)
+    predictedDF.select("artist", "genre", "rawPrediction", "probability", s"predicted $label").show(true)
   }
 }
 
